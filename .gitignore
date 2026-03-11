@@ -1,0 +1,7 @@
+# Dataset files (too large for GitHub)
+dataset/
+venv/
+__pycache__/
+*.pyc
+
+# Keep models and results

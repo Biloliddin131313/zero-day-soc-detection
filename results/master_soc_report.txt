@@ -1,0 +1,50 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║      ZERO-DAY SOC DETECTION SYSTEM — MASTER REPORT          ║
+╚══════════════════════════════════════════════════════════════╝
+
+Generated     : 2026-03-11 04:21:32
+Analyst       : Biloliddin Turaev
+Institution   : Southampton Solent University
+Dataset       : CICIDS2017
+
+──────────────────────────────────────────────────────────────
+CROSS-MODULE PERFORMANCE SUMMARY
+──────────────────────────────────────────────────────────────
+Module          RF-AUC    ISO-AUC    AE-AUC    Difficulty
+──────────────────────────────────────────────────────────────
+DDoS            1.0000    0.7522     0.8592    Medium
+Brute Force     0.9998    0.6688     0.6867    Hard
+DoS             1.0000    0.8290     0.8318    Easy
+Web Attacks     0.9998    0.7018     0.7694    Medium
+Botnet          0.9996    0.5875     0.5740    Very Hard
+──────────────────────────────────────────────────────────────
+Average         0.9999    0.7079     0.7342
+──────────────────────────────────────────────────────────────
+
+KEY FINDINGS
+──────────────────────────────────────────────────────────────
+1. Supervised Random Forest achieves near-perfect detection
+   across all attack types when labels are available
+
+2. Unsupervised models successfully detect attacks without
+   prior knowledge — confirming zero-day detection capability
+
+3. DoS attacks are most detectable unsupervised (AUC 0.83)
+   due to high-volume anomalous traffic patterns
+
+4. Botnet is hardest to detect unsupervised (AUC 0.57)
+   due to slow, subtle behaviour mimicking normal traffic
+
+5. Autoencoder outperforms Isolation Forest on 4 of 5 modules
+   confirming deep learning advantage for anomaly detection
+
+RECOMMENDATION
+──────────────────────────────────────────────────────────────
+Deploy ensemble of Isolation Forest + Autoencoder for
+zero-day detection with Random Forest as supervised baseline.
+Priority investigation order: DoS > DDoS > Web > Brute > Bot
+
+══════════════════════════════════════════════════════════════
+END OF MASTER REPORT
+══════════════════════════════════════════════════════════════

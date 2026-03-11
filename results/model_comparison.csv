@@ -1,0 +1,4 @@
+Model,Precision,Recall,F1,ROC-AUC,Type
+Isolation Forest,0.8112,0.1656,0.2751,0.7522,Unsupervised
+Autoencoder,0.9423,0.6236,0.7505,0.8592,Unsupervised
+Random Forest,1.0,1.0,1.0,1.0,Supervised (baseline)

@@ -1,0 +1,78 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║         ZERO-DAY SOC DETECTION SYSTEM — THREAT REPORT       ║
+╚══════════════════════════════════════════════════════════════╝
+
+Generated     : 2026-03-11 04:18:47
+Attack Module : DoS
+Analyst       : Biloliddin Turaev
+Institution   : Southampton Solent University
+
+──────────────────────────────────────────────────────────────
+DETECTION SUMMARY
+──────────────────────────────────────────────────────────────
+Total Flows Analysed  : 27,834
+Flagged as Alerts     : 12,407
+Suppressed (Normal)   : 15,427
+Alert Reduction       : 55.4%
+
+──────────────────────────────────────────────────────────────
+TRIAGE BREAKDOWN
+──────────────────────────────────────────────────────────────
+🔴 CRITICAL : 0
+🟠 HIGH     : 3
+🟡 MEDIUM   : 11,011
+🟢 LOW      : 16,820
+
+──────────────────────────────────────────────────────────────
+MODEL PERFORMANCE
+──────────────────────────────────────────────────────────────
+Random Forest (Supervised)     : Precision 0.9995
+Isolation Forest (Zero-Day)    : Flagged 10,909 anomalies
+Autoencoder (Zero-Day)         : Flagged 12,094 anomalies
+
+──────────────────────────────────────────────────────────────
+TOP 5 CRITICAL ALERTS
+──────────────────────────────────────────────────────────────
+Alert #1
+  Risk Score  : 0.6662
+  Tier        : HIGH
+  ISO Flag    : ⚠️  ANOMALY
+  AE Flag     : ⚠️  ANOMALY
+  True Label  : ✅ BENIGN
+Alert #2
+  Risk Score  : 0.6154
+  Tier        : HIGH
+  ISO Flag    : ✅ Normal
+  AE Flag     : ⚠️  ANOMALY
+  True Label  : ✅ BENIGN
+Alert #3
+  Risk Score  : 0.5051
+  Tier        : HIGH
+  ISO Flag    : ⚠️  ANOMALY
+  AE Flag     : ⚠️  ANOMALY
+  True Label  : ✅ BENIGN
+Alert #4
+  Risk Score  : 0.4897
+  Tier        : MEDIUM
+  ISO Flag    : ⚠️  ANOMALY
+  AE Flag     : ⚠️  ANOMALY
+  True Label  : ✅ BENIGN
+Alert #5
+  Risk Score  : 0.4659
+  Tier        : MEDIUM
+  ISO Flag    : ⚠️  ANOMALY
+  AE Flag     : ⚠️  ANOMALY
+  True Label  : ✅ BENIGN
+
+──────────────────────────────────────────────────────────────
+RECOMMENDATION
+──────────────────────────────────────────────────────────────
+1. Immediately investigate all CRITICAL and HIGH tier alerts
+2. Review MEDIUM tier alerts within 4 hours
+3. LOW tier alerts can be processed during normal operations
+4. Cross-reference flagged IPs against threat intelligence feeds
+
+══════════════════════════════════════════════════════════════
+END OF REPORT — 2026-03-11 04:18:47
+══════════════════════════════════════════════════════════════
