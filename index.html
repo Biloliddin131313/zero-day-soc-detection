@@ -847,18 +847,18 @@ footer {
   footer { flex-direction: column; gap: 16px; text-align: center; padding: 24px; }
 }
 
-/* ── RADAR ── */
-#radar-canvas {
+
+/* ── NODE NETWORK ── */
+#node-canvas {
   position: fixed;
   inset: 0;
   z-index: 0;
-  opacity: 0.18;
   pointer-events: none;
 }
 </style>
 </head>
 <body>
-<canvas id="radar-canvas"></canvas>
+<canvas id="node-canvas"></canvas>
 
 <!-- TICKER -->
 <div class="ticker">
@@ -1519,6 +1519,106 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   for (let i = 0; i < 8; i++) randomBlip();
   draw();
   window.addEventListener('resize', resize);
+})();
+</script>
+<script>
+(function() {
+  const canvas = document.getElementById('node-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [];
+
+  const COLORS = ['#00c2ff','#00e5a0','#ff4060','#f5a623','#bf5fff'];
+  const COUNT  = 90;
+  const DIST   = 160;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function init() {
+    nodes = [];
+    for (let i = 0; i < COUNT; i++) {
+      const col = COLORS[Math.floor(Math.random() * COLORS.length)];
+      nodes.push({
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r:  Math.random() * 1.8 + 0.8,
+        col: col,
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // connections
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const d  = Math.sqrt(dx*dx + dy*dy);
+        if (d < DIST) {
+          const alpha = (1 - d / DIST) * 0.35;
+          // pick colour from one of the two nodes
+          const col = nodes[i].col;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = col.replace(')', `,${alpha})`).replace('rgb(', 'rgba(').replace('#', 'rgba(').replace('rgba(', 'rgba(');
+
+          // convert hex to rgba properly
+          const hex = nodes[i].col.replace('#','');
+          const r = parseInt(hex.slice(0,2),16);
+          const g = parseInt(hex.slice(2,4),16);
+          const b = parseInt(hex.slice(4,6),16);
+          ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // nodes
+    nodes.forEach(n => {
+      n.pulse += 0.04;
+      const glow = (Math.sin(n.pulse) + 1) * 0.5;
+
+      const hex = n.col.replace('#','');
+      const r = parseInt(hex.slice(0,2),16);
+      const g = parseInt(hex.slice(2,4),16);
+      const b = parseInt(hex.slice(4,6),16);
+
+      // glow
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r + 3 * glow, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.08 * glow})`;
+      ctx.fill();
+
+      // core
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.7 + 0.3 * glow})`;
+      ctx.shadowColor = n.col;
+      ctx.shadowBlur  = 6 + 6 * glow;
+      ctx.fill();
+      ctx.shadowBlur  = 0;
+
+      // move
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  resize(); init(); draw();
+  window.addEventListener('resize', () => { resize(); init(); });
 })();
 </script>
 </body>
