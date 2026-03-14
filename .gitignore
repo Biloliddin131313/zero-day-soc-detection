@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 
 # Keep models and results
+.env
