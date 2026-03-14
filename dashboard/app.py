@@ -106,7 +106,7 @@ def explain_alert():
             "https://api.anthropic.com/v1/messages",
             headers={
                 "Content-Type": "application/json",
-                "x-api-key": "os.environ.get("ANTHROPIC_API_KEY","")",
+                "x-api-key": os.environ.get("ANTHROPIC_API_KEY",""),
                 "anthropic-version": "2023-06-01"
             },
             json={"model": "claude-sonnet-4-20250514", "max_tokens": 300, "messages": [{"role": "user", "content": prompt}]},
