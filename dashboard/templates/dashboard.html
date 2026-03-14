@@ -3,1035 +3,610 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>0xDay — SOC Detection Platform</title>
+<title>0xDay — Security Operations Centre</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
 
-:root {
-  --bg:       #04070c;
-  --surface:  #080d14;
-  --card:     #0c1420;
-  --border:   #111d2a;
-  --border2:  #1a2d3f;
-  --text:     #e8edf2;
-  --muted:    #3a5068;
-  --muted2:   #6b8499;
-  --cyan:     #00d4ff;
-  --green:    #00e5a0;
-  --red:      #ff3b5c;
-  --orange:   #ff9500;
-  --yellow:   #ffd166;
-  --mono:     'JetBrains Mono', monospace;
-  --display:  'Syne', sans-serif;
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--mono);
-  min-height: 100vh;
-  overflow-x: hidden;
+:root{
+  --bg:     #04060a;
+  --dark:   #060810;
+  --card:   #0a0d14;
+  --line:   rgba(255,255,255,0.06);
+  --line2:  rgba(255,255,255,0.03);
+  --text:   #eef1f6;
+  --dim:    #8a96a8;
+  --faint:  #3a4455;
+  --cyan:   #00c2ff;
+  --green:  #00e5a0;
+  --red:    #ff4060;
+  --amber:  #f5a623;
+  --purple: #bf5fff;
+  --sans:   'IBM Plex Sans', sans-serif;
+  --mono:   'IBM Plex Mono', monospace;
 }
 
-/* scrollbar */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-/* ── SCANLINE OVERLAY ── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-  pointer-events: none;
-  z-index: 1000;
-}
+/* ── CANVAS ── */
+#node-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35}
 
-/* ── NAV ── */
-nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 52px;
-  background: rgba(4,7,12,0.95);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  z-index: 100;
-  backdrop-filter: blur(20px);
+/* ── TOPBAR ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;
+  background:rgba(4,6,10,0.92);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);
 }
-
-.nav-logo {
-  font-family: var(--display);
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.5px;
-  text-decoration: none;
+.nav-left{display:flex;align-items:center;gap:20px}
+.nav-logo{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:1px}
+.nav-logo span{color:var(--cyan)}
+.nav-sep{width:1px;height:16px;background:var(--line)}
+.nav-tag{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:2px;text-transform:uppercase}
+.nav-right{display:flex;align-items:center;gap:20px}
+.live-pill{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+#nav-time{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:1px}
+.nav-btn{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  color:#050608;background:var(--cyan);
+  padding:7px 16px;border-radius:2px;text-decoration:none;
+  letter-spacing:1px;text-transform:uppercase;
+  transition:all 0.2s;
 }
-.nav-logo span { color: var(--cyan); }
-
-.nav-center {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.58rem;
-  color: var(--muted2);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-.nav-pip {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  animation: pip 2s ease-in-out infinite;
-}
-@keyframes pip {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  font-size: 0.58rem;
-  color: var(--muted2);
-  letter-spacing: 1px;
-}
-#nav-time { color: var(--cyan); font-weight: 600; }
-#nav-status {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.status-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
-}
+.nav-btn:hover{background:#33d4ff;box-shadow:0 0 20px rgba(0,194,255,0.3)}
 
 /* ── LAYOUT ── */
-.layout {
-  display: grid;
-  grid-template-columns: 220px 1fr 280px;
-  grid-template-rows: auto;
-  min-height: 100vh;
-  padding-top: 52px;
-}
+.shell{padding-top:56px;display:grid;grid-template-columns:200px 1fr 292px;min-height:calc(100vh - 56px);position:relative;z-index:1}
 
 /* ── SIDEBAR ── */
-.sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: 24px 0;
-  position: sticky;
-  top: 52px;
-  height: calc(100vh - 52px);
-  overflow-y: auto;
+.sidebar{
+  border-right:1px solid var(--line);
+  background:rgba(4,6,10,0.7);
+  backdrop-filter:blur(20px);
+  padding:28px 0;
+  display:flex;flex-direction:column;gap:28px;
+  position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;
 }
-
-.sidebar-section {
-  padding: 0 16px;
-  margin-bottom: 28px;
+.sb-group{padding:0 16px}
+.sb-heading{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-left:8px}
+.sb-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 10px;border-radius:2px;cursor:pointer;
+  transition:background 0.15s;text-decoration:none;margin-bottom:1px;
 }
-.sidebar-label {
-  font-size: 0.5rem;
-  color: var(--muted);
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  padding: 0 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 2px;
-  text-decoration: none;
-}
-.nav-item:hover, .nav-item.active {
-  background: var(--card);
-}
-.nav-item.active { border-left: 2px solid var(--cyan); padding-left: 8px; }
-.nav-item-icon { font-size: 0.75rem; width: 16px; text-align: center; }
-.nav-item-text { font-size: 0.62rem; color: var(--muted2); letter-spacing: 0.5px; }
-.nav-item.active .nav-item-text { color: var(--text); }
-.nav-item-badge {
-  margin-left: auto;
-  font-size: 0.5rem;
-  padding: 1px 5px;
-  background: rgba(0,212,255,0.1);
-  color: var(--cyan);
-  border-radius: 2px;
-  border: 1px solid rgba(0,212,255,0.2);
-}
-
-.module-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 1px;
-}
-.module-item:hover { background: var(--card); }
-.module-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.module-name-s { font-size: 0.6rem; color: var(--muted2); flex: 1; }
-.module-auc { font-size: 0.55rem; color: var(--muted); }
-
-.sidebar-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 0 16px 20px;
-}
+.sb-item:hover{background:rgba(255,255,255,0.04)}
+.sb-item.active{background:rgba(255,255,255,0.06);border-left:2px solid var(--cyan);padding-left:8px}
+.sb-name{font-size:13px;font-weight:500;color:var(--dim)}
+.sb-item.active .sb-name{color:var(--text)}
+.sb-badge{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.sb-div{height:1px;background:var(--line);margin:0 16px}
+.mod-line{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:2px;cursor:pointer;transition:background 0.15s;margin-bottom:1px}
+.mod-line:hover{background:rgba(255,255,255,0.03)}
+.ml-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ml-name{font-size:12px;font-weight:500;color:var(--dim);flex:1}
+.ml-auc{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.sb-sys-row{display:flex;justify-content:space-between;align-items:center;padding:5px 10px}
+.sb-sys-k{font-size:12px;color:var(--faint);font-weight:400}
+.sb-sys-v{font-family:var(--mono);font-size:11px;color:var(--dim)}
 
 /* ── MAIN ── */
-main {
-  padding: 24px;
-  overflow-y: auto;
-}
+main{padding:32px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:28px}
 
-/* ── TOP METRICS ── */
-.top-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 20px;
+/* ── SEC HEADER ── */
+.sec-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.sec-eyebrow{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--cyan);letter-spacing:3px;text-transform:uppercase;
+  display:flex;align-items:center;gap:10px;
 }
+.sec-eyebrow::before{content:'';width:20px;height:1px;background:var(--cyan)}
+.sec-meta{font-family:var(--mono);font-size:10px;color:var(--faint)}
 
-.metric-card {
-  background: var(--card);
-  padding: 20px 22px;
-  position: relative;
-  overflow: hidden;
-  transition: background 0.2s;
+/* ── KPI ROW ── */
+.kpi-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:2px;overflow:hidden;
 }
-.metric-card:hover { background: #0f1c2a; }
-.metric-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  opacity: 0;
-  transition: opacity 0.3s;
+.kpi{
+  background:var(--bg);padding:22px 24px;
+  transition:background 0.2s;position:relative;overflow:hidden;
 }
-.metric-card:hover::after { opacity: 1; }
-.mc-red::after   { background: var(--red); }
-.mc-green::after { background: var(--green); }
-.mc-cyan::after  { background: var(--cyan); }
-.mc-orange::after { background: var(--orange); }
+.kpi:hover{background:var(--card)}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;opacity:0;transition:opacity 0.3s}
+.kpi:hover::after{opacity:1}
+.kpi-red::after{background:var(--red)}
+.kpi-green::after{background:var(--green)}
+.kpi-cyan::after{background:var(--cyan)}
+.kpi-dim::after{background:var(--dim)}
+.kpi-label{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.kpi-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;letter-spacing:-1px;margin-bottom:5px}
+.kpi-sub{font-size:11px;color:var(--faint);font-weight:300}
+.c-red{color:var(--red)}.c-green{color:var(--green)}.c-cyan{color:var(--cyan)}.c-dim{color:var(--dim)}.c-amber{color:var(--amber)}
 
-.metric-label {
-  font-size: 0.52rem;
-  color: var(--muted);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
+/* ── PANEL ── */
+.panel{
+  background:var(--bg);
+  border:1px solid var(--line);
+  border-radius:2px;overflow:hidden;
 }
-.metric-value {
-  font-family: var(--display);
-  font-size: 2rem;
-  font-weight: 800;
-  line-height: 1;
-  margin-bottom: 4px;
-  letter-spacing: -1px;
+.panel-head{
+  padding:13px 20px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--dark);
 }
-.metric-sub { font-size: 0.55rem; color: var(--muted2); letter-spacing: 0.5px; }
-.c-red    { color: var(--red); }
-.c-green  { color: var(--green); }
-.c-cyan   { color: var(--cyan); }
-.c-orange { color: var(--orange); }
-.c-yellow { color: var(--yellow); }
+.panel-title{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
+.panel-tag{font-family:var(--mono);font-size:10px;letter-spacing:0.5px}
+.tag-live{color:var(--green)}.tag-data{color:var(--cyan)}
 
-/* ── CHART SECTION ── */
-.chart-row {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 16px;
-  margin-bottom: 20px;
-}
+/* ── CHART ── */
+.chart-body{padding:16px 20px;height:180px}
 
-.panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
+/* ── MODULE TABLE ── */
+.mod-thead{
+  display:grid;grid-template-columns:32px 1fr 110px 90px 90px 90px 84px;
+  padding:10px 20px;border-bottom:1px solid var(--line);gap:12px;
+  background:var(--dark);
 }
-.panel-head {
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--surface);
+.th{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--faint);letter-spacing:1px;text-transform:uppercase}
+.mod-row{
+  display:grid;grid-template-columns:32px 1fr 110px 90px 90px 90px 84px;
+  padding:13px 20px;border-bottom:1px solid var(--line2);
+  gap:12px;align-items:center;transition:background 0.15s;
 }
-.panel-title {
-  font-size: 0.6rem;
-  color: var(--muted2);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-.panel-badge {
-  font-size: 0.52rem;
-  padding: 2px 7px;
-  border-radius: 2px;
-  letter-spacing: 1px;
-}
-.pb-live { background: rgba(0,229,160,0.08); color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
-.pb-shap { background: rgba(0,212,255,0.08); color: var(--cyan); border: 1px solid rgba(0,212,255,0.2); }
+.mod-row:last-child{border-bottom:none}
+.mod-row:hover{background:rgba(255,255,255,0.02)}
+.mod-idx{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.mod-name-t{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.mod-type-t{font-size:11px;color:var(--faint);font-weight:300}
+.ratio-wrap{display:flex;flex-direction:column;gap:5px}
+.ratio-track{height:2px;background:var(--line);border-radius:1px;overflow:hidden}
+.ratio-fill{height:100%;border-radius:1px;transition:width 1.2s ease}
+.ratio-pct{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--dim)}
+.cell-num{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--dim)}
+.cell-hi{color:var(--cyan)}
+.sev{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.5px;padding:3px 8px;border-radius:2px;border:1px solid;display:inline-block}
+.sev-c{color:var(--red);border-color:rgba(255,64,96,0.3);background:rgba(255,64,96,0.07)}
+.sev-h{color:var(--amber);border-color:rgba(245,166,35,0.3);background:rgba(245,166,35,0.06)}
+.sev-m{color:#c8a84b;border-color:rgba(200,168,75,0.25);background:rgba(200,168,75,0.05)}
+.sev-l{color:var(--green);border-color:rgba(0,229,160,0.25);background:rgba(0,229,160,0.05)}
 
-.chart-body { padding: 16px; height: 220px; position: relative; }
+/* ── TRIAGE ── */
+.triage-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:2px;overflow:hidden;
+}
+.tc{background:var(--bg);padding:20px 22px;transition:background 0.2s;position:relative;overflow:hidden}
+.tc:hover{background:var(--card)}
+.tc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;opacity:0;transition:opacity 0.3s}
+.tc:hover::after{opacity:1}
+.tc-red::after{background:var(--red)}.tc-amber::after{background:var(--amber)}.tc-gold::after{background:#c8a84b}.tc-green::after{background:var(--green)}
+.tc-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.tc-num{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1;margin-bottom:4px}
+.tc-sub{font-family:var(--mono);font-size:10px;color:var(--faint)}
 
-canvas { display: block; }
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
-/* ── MODULE GRID ── */
-.modules-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
+/* ── SHAP ── */
+.shap-row{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line2);transition:background 0.15s}
+.shap-row:last-child{border-bottom:none}
+.shap-row:hover{background:rgba(255,255,255,0.02)}
+.shap-rank{font-family:var(--mono);font-size:10px;color:var(--faint);width:16px;flex-shrink:0}
+.shap-name{font-size:12px;font-weight:500;color:var(--dim);flex:1}
+.shap-track{width:70px;height:2px;background:var(--line);border-radius:1px;overflow:hidden;flex-shrink:0}
+.shap-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:1px}
+.shap-val{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--cyan);width:40px;text-align:right;flex-shrink:0}
 
-.mod-card {
-  background: var(--card);
-  padding: 18px 16px;
-  transition: background 0.2s;
-  position: relative;
-  cursor: pointer;
-}
-.mod-card:hover { background: #0f1c2a; }
-.mod-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-.mod-num {
-  font-family: var(--display);
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--border2);
-  line-height: 1;
-  letter-spacing: -1px;
-  transition: color 0.2s;
-}
-.mod-card:hover .mod-num { color: var(--cyan); }
+/* ── MODEL PERF ── */
+.perf-row{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line2);transition:background 0.15s}
+.perf-row:last-child{border-bottom:none}
+.perf-row:hover{background:rgba(255,255,255,0.02)}
+.perf-name{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--dim);width:95px;flex-shrink:0}
+.perf-type{font-family:var(--mono);font-size:9px;color:var(--faint);width:68px;flex-shrink:0;letter-spacing:0.5px}
+.perf-track{flex:1;height:2px;background:var(--line);border-radius:1px;overflow:hidden}
+.perf-fill{height:100%;border-radius:1px}
+.perf-auc{font-family:var(--mono);font-size:12px;font-weight:600;width:48px;text-align:right;flex-shrink:0}
 
-.risk-badge {
-  font-size: 0.48rem;
-  padding: 2px 5px;
-  border-radius: 2px;
-  letter-spacing: 1px;
-  font-weight: 600;
+/* ── RIGHT PANEL ── */
+.right-panel{
+  border-left:1px solid var(--line);
+  background:rgba(4,6,10,0.7);
+  backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;
+  position:sticky;top:56px;height:calc(100vh - 56px);
 }
-.rb-crit { background: rgba(255,59,92,0.12); color: var(--red); border: 1px solid rgba(255,59,92,0.25); }
-.rb-high { background: rgba(255,149,0,0.1); color: var(--orange); border: 1px solid rgba(255,149,0,0.2); }
-.rb-med  { background: rgba(255,209,102,0.08); color: var(--yellow); border: 1px solid rgba(255,209,102,0.18); }
-.rb-low  { background: rgba(0,229,160,0.07); color: var(--green); border: 1px solid rgba(0,229,160,0.15); }
+.rp-head{
+  padding:13px 18px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--dark);flex-shrink:0;
+}
+.rp-title{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
+.rp-live{font-family:var(--mono);font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px}
+.alert-list{flex:1;overflow-y:auto}
+.alert-entry{
+  padding:12px 18px;border-bottom:1px solid var(--line2);
+  cursor:pointer;transition:background 0.15s;
+  animation:slideIn 0.3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.alert-entry:hover{background:rgba(255,255,255,0.02)}
+.ae-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.ae-sev{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:0.5px}
+.ae-time{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.ae-mod{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ae-det{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.rp-foot{
+  border-top:1px solid var(--line);padding:14px 18px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  flex-shrink:0;background:var(--dark);
+}
+.rpf{text-align:center}
+.rpf-v{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1;margin-bottom:3px}
+.rpf-l{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:0.5px;text-transform:uppercase}
 
-.mod-name-d { font-size: 0.72rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-.mod-type-d { font-size: 0.52rem; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 12px; }
+/* ── REPORT BTN ── */
+.report-btn{
+  display:block;margin:12px 16px;
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  color:#050608;background:var(--cyan);
+  padding:9px;border-radius:2px;text-decoration:none;
+  letter-spacing:1px;text-transform:uppercase;
+  text-align:center;transition:all 0.2s;flex-shrink:0;
+}
+.report-btn:hover{background:#33d4ff;box-shadow:0 0 20px rgba(0,194,255,0.25)}
 
-.mod-bar-wrap { margin-bottom: 10px; }
-.mod-bar-label { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.mod-bar-label span { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.5px; }
-.mod-bar-label b { font-size: 0.5rem; color: var(--muted2); }
-.mod-bar-track { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
-.mod-bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
-
-.mod-metrics-row {
-  display: flex;
-  gap: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-.mod-m { }
-.mod-m-v { font-size: 0.7rem; font-weight: 700; line-height: 1; }
-.mod-m-l { font-size: 0.45rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
-
-/* ── ALERT FEED ── */
-.alert-feed-panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  position: sticky;
-  top: 76px;
-  height: calc(100vh - 96px);
-  display: flex;
-  flex-direction: column;
-}
-
-.alert-feed-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 0;
-}
-
-.alert-item {
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(17,29,42,0.7);
-  transition: background 0.15s;
-  cursor: pointer;
-  animation: alertIn 0.4s ease;
-}
-@keyframes alertIn {
-  from { opacity: 0; transform: translateX(8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-.alert-item:hover { background: rgba(255,255,255,0.02); }
-
-.alert-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.alert-sev {
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  padding: 1px 5px;
-  border-radius: 2px;
-}
-.sev-crit { color: var(--red); background: rgba(255,59,92,0.1); }
-.sev-high { color: var(--orange); background: rgba(255,149,0,0.08); }
-.sev-med  { color: var(--yellow); background: rgba(255,209,102,0.07); }
-.sev-low  { color: var(--green); background: rgba(0,229,160,0.06); }
-.sev-supp { color: var(--muted); background: rgba(58,80,104,0.1); }
-
-.alert-time { font-size: 0.48rem; color: var(--muted); }
-.alert-module { font-size: 0.58rem; color: var(--text); font-weight: 500; margin-bottom: 2px; }
-.alert-detail { font-size: 0.52rem; color: var(--muted2); letter-spacing: 0.3px; }
-
-.alert-footer {
-  padding: 10px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.af-stat { text-align: center; }
-.af-v { font-size: 0.8rem; font-weight: 700; color: var(--cyan); }
-.af-l { font-size: 0.45rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
-
-/* ── SHAP PANEL ── */
-.shap-row { font-size: 0; }
-.sf-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 16px;
-  border-bottom: 1px solid rgba(17,29,42,0.5);
-}
-.sf-item:last-child { border-bottom: none; }
-.sf-rank { font-size: 0.5rem; color: var(--muted); width: 14px; flex-shrink: 0; }
-.sf-name-s { font-size: 0.58rem; color: var(--text); flex: 1; }
-.sf-bar-s { width: 60px; height: 2px; background: var(--border2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
-.sf-fill-s { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); border-radius: 2px; }
-.sf-val-s { font-size: 0.55rem; color: var(--cyan); font-weight: 600; width: 36px; text-align: right; flex-shrink: 0; }
-
-/* ── TRIAGE TABLE ── */
-.triage-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-.triage-card {
-  background: var(--card);
-  padding: 16px;
-  text-align: center;
-}
-.tc-sev { font-size: 0.5rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
-.tc-val { font-family: var(--display); font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-.tc-label { font-size: 0.5rem; color: var(--muted); letter-spacing: 1px; }
-
-/* ── MODEL COMPARISON ── */
-.model-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(17,29,42,0.5);
-}
-.model-row:last-child { border-bottom: none; }
-.model-name-r { font-size: 0.6rem; color: var(--text); width: 120px; flex-shrink: 0; }
-.model-type-r { font-size: 0.48rem; padding: 1px 5px; border-radius: 2px; letter-spacing: 1px; margin-right: 8px; flex-shrink: 0; }
-.mt-zd  { background: rgba(0,212,255,0.08); color: var(--cyan); border: 1px solid rgba(0,212,255,0.15); }
-.mt-sup { background: rgba(255,59,92,0.07); color: var(--red); border: 1px solid rgba(255,59,92,0.12); }
-.model-bar-r { flex: 1; height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
-.model-bar-fill-r { height: 100%; border-radius: 2px; }
-.model-auc-r { font-size: 0.65rem; font-weight: 700; width: 50px; text-align: right; flex-shrink: 0; }
-
-/* ── LOADING STATE ── */
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-  font-size: 0.6rem;
-  color: var(--muted);
-  letter-spacing: 1px;
-}
-.loading-dot {
-  width: 4px; height: 4px;
-  background: var(--cyan);
-  border-radius: 50%;
-  animation: ldot 1.2s ease-in-out infinite;
-}
-.loading-dot:nth-child(2) { animation-delay: 0.2s; }
-.loading-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes ldot {
-  0%,100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 1280px) {
-  .layout { grid-template-columns: 200px 1fr 260px; }
-  .modules-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 1024px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .alert-feed-panel { position: relative; height: 400px; }
-  .chart-row { grid-template-columns: 1fr; }
-  .top-metrics { grid-template-columns: repeat(2, 1fr); }
-}
+/* scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan)}
 </style>
 </head>
 <body>
 
+<canvas id="node-canvas"></canvas>
+
 <!-- NAV -->
 <nav>
-  <a href="#" class="nav-logo">0x<span>Day</span></a>
-  <div class="nav-center">
-    <div class="nav-pip"></div>
-    <span>SOC DETECTION PLATFORM · LIVE</span>
+  <div class="nav-left">
+    <a href="/" class="nav-logo">0x<span>Day</span></a>
+    <div class="nav-sep"></div>
+    <span class="nav-tag">Security Operations Centre</span>
   </div>
   <div class="nav-right">
+    <div class="live-pill">
+      <div class="live-dot"></div>
+      <span id="prom-label">Connecting...</span>
+    </div>
+    <div class="nav-sep"></div>
     <span id="nav-time">--:--:--</span>
-    <span id="nav-status"><span class="status-dot"></span> PROMETHEUS CONNECTED</span>
+    <a href="/api/report" class="nav-btn">↓ Report</a>
   </div>
 </nav>
 
-<!-- LAYOUT -->
-<div class="layout">
+<div class="shell">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Navigation</div>
-      <a href="#" class="nav-item active">
-        <span class="nav-item-icon">◈</span>
-        <span class="nav-item-text">Overview</span>
-        <span class="nav-item-badge">LIVE</span>
-      </a>
-      <a href="#modules" class="nav-item">
-        <span class="nav-item-icon">⬡</span>
-        <span class="nav-item-text">Modules</span>
-        <span class="nav-item-badge">5</span>
-      </a>
-      <a href="#alerts" class="nav-item">
-        <span class="nav-item-icon">◎</span>
-        <span class="nav-item-text">Alert Feed</span>
-      </a>
-      <a href="#results" class="nav-item">
-        <span class="nav-item-icon">◇</span>
-        <span class="nav-item-text">Results</span>
-      </a>
+  <nav class="sidebar">
+    <div class="sb-group">
+      <div class="sb-heading">View</div>
+      <a href="#kpi-section" class="sb-item active"><span class="sb-name">Overview</span><span class="sb-badge">Live</span></a>
+      <a href="#modules-section" class="sb-item" onclick="document.getElementById('modules-section').scrollIntoView({behavior:'smooth'});return false;"><span class="sb-name">Modules</span><span class="sb-badge">5</span></a>
+      <a href="#results-section" class="sb-item" onclick="document.getElementById('results-section').scrollIntoView({behavior:'smooth'});return false;"><span class="sb-name">Results</span></a>
+      <a href="#shap-section" class="sb-item" onclick="document.getElementById('shap-section').scrollIntoView({behavior:'smooth'});return false;"><span class="sb-name">Explainability</span></a>
     </div>
-
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label">Attack Modules</div>
-      <div class="module-item">
-        <div class="module-dot" style="background:#ff3b5c;box-shadow:0 0 5px #ff3b5c"></div>
-        <span class="module-name-s">DDoS</span>
-        <span class="module-auc">0.8592</span>
-      </div>
-      <div class="module-item">
-        <div class="module-dot" style="background:#ff9500;box-shadow:0 0 5px #ff9500"></div>
-        <span class="module-name-s">Brute Force</span>
-        <span class="module-auc">0.6867</span>
-      </div>
-      <div class="module-item">
-        <div class="module-dot" style="background:#ffd166;box-shadow:0 0 5px #ffd166"></div>
-        <span class="module-name-s">DoS</span>
-        <span class="module-auc">0.8318</span>
-      </div>
-      <div class="module-item">
-        <div class="module-dot" style="background:#06d6a0;box-shadow:0 0 5px #06d6a0"></div>
-        <span class="module-name-s">Web Attacks</span>
-        <span class="module-auc">0.7694</span>
-      </div>
-      <div class="module-item">
-        <div class="module-dot" style="background:#00d4ff;box-shadow:0 0 5px #00d4ff"></div>
-        <span class="module-name-s">Botnet</span>
-        <span class="module-auc">0.5740</span>
-      </div>
+    <div class="sb-div"></div>
+    <div class="sb-group">
+      <div class="sb-heading">Modules</div>
+      <div class="mod-line"><div class="ml-dot" style="background:#ff4060;box-shadow:0 0 5px #ff4060"></div><span class="ml-name">DDoS</span><span class="ml-auc">0.8592</span></div>
+      <div class="mod-line"><div class="ml-dot" style="background:#f5a623;box-shadow:0 0 5px #f5a623"></div><span class="ml-name">Brute Force</span><span class="ml-auc">0.6867</span></div>
+      <div class="mod-line"><div class="ml-dot" style="background:#c8a84b;box-shadow:0 0 5px #c8a84b"></div><span class="ml-name">DoS</span><span class="ml-auc">0.8318</span></div>
+      <div class="mod-line"><div class="ml-dot" style="background:#00e5a0;box-shadow:0 0 5px #00e5a0"></div><span class="ml-name">Web Attacks</span><span class="ml-auc">0.7694</span></div>
+      <div class="mod-line"><div class="ml-dot" style="background:#00c2ff;box-shadow:0 0 5px #00c2ff"></div><span class="ml-name">Botnet</span><span class="ml-auc">0.5740</span></div>
     </div>
-
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label">System</div>
-      <div class="nav-item">
-        <span class="nav-item-icon">▸</span>
-        <span class="nav-item-text">Prometheus</span>
-        <span class="nav-item-badge" id="prom-status">—</span>
-      </div>
-      <div class="nav-item">
-        <span class="nav-item-icon">▸</span>
-        <span class="nav-item-text">Port 9090</span>
-      </div>
-      <div class="nav-item">
-        <span class="nav-item-icon">▸</span>
-        <span class="nav-item-text">Interval 10s</span>
-      </div>
+    <div class="sb-div"></div>
+    <div class="sb-group">
+      <div class="sb-heading">System</div>
+      <div class="sb-sys-row"><span class="sb-sys-k">Prometheus</span><span class="sb-sys-v" id="sb-prom">—</span></div>
+      <div class="sb-sys-row"><span class="sb-sys-k">Exporter</span><span class="sb-sys-v">:8001</span></div>
+      <div class="sb-sys-row"><span class="sb-sys-k">Interval</span><span class="sb-sys-v">10s</span></div>
+      <div class="sb-sys-row"><span class="sb-sys-k">Dashboard</span><span class="sb-sys-v">:5000</span></div>
     </div>
-  </aside>
+    <div class="sb-div"></div>
+    <a href="/api/report" class="report-btn">↓ Generate PDF Report</a>
+  </nav>
 
   <!-- MAIN -->
   <main>
 
-    <!-- TOP METRICS -->
-    <div class="top-metrics" id="top-metrics">
-      <div class="metric-card mc-red">
-        <div class="metric-label">Total Attacks Detected</div>
-        <div class="metric-value c-red" id="m-attacks">—</div>
-        <div class="metric-sub">across all 5 modules</div>
+    <!-- KPI -->
+    <div id="kpi-section">
+      <div class="sec-hd">
+        <span class="sec-eyebrow">System Status</span>
+        <span class="sec-meta" id="last-update">—</span>
       </div>
-      <div class="metric-card mc-green">
-        <div class="metric-label">Benign Flows</div>
-        <div class="metric-value c-green" id="m-benign">—</div>
-        <div class="metric-sub">baseline normal traffic</div>
-      </div>
-      <div class="metric-card mc-cyan">
-        <div class="metric-label">Best Zero-Day AUC</div>
-        <div class="metric-value c-cyan">0.8318</div>
-        <div class="metric-sub">Autoencoder · DoS module</div>
-      </div>
-      <div class="metric-card mc-orange">
-        <div class="metric-label">Alert Reduction</div>
-        <div class="metric-value c-orange">61%</div>
-        <div class="metric-sub">27,642 flows suppressed</div>
+      <div class="kpi-row">
+        <div class="kpi kpi-red">
+          <div class="kpi-label">Total Attacks</div>
+          <div class="kpi-val c-red" id="kpi-attacks">—</div>
+          <div class="kpi-sub">across 5 modules</div>
+        </div>
+        <div class="kpi kpi-green">
+          <div class="kpi-label">Benign Flows</div>
+          <div class="kpi-val c-green" id="kpi-benign">—</div>
+          <div class="kpi-sub">normal traffic baseline</div>
+        </div>
+        <div class="kpi kpi-cyan">
+          <div class="kpi-label">Best AE AUC</div>
+          <div class="kpi-val c-cyan">0.8318</div>
+          <div class="kpi-sub">DoS · zero-day capable</div>
+        </div>
+        <div class="kpi kpi-dim">
+          <div class="kpi-label">Alert Reduction</div>
+          <div class="kpi-val c-dim">61%</div>
+          <div class="kpi-sub">27,642 flows suppressed</div>
+        </div>
       </div>
     </div>
 
-    <!-- CHART ROW -->
-    <div class="chart-row">
-      <div class="panel">
-        <div class="panel-head">
-          <span class="panel-title">Live Attack Rate — All Modules</span>
-          <span class="panel-badge pb-live">● LIVE</span>
-        </div>
-        <div class="chart-body">
-          <canvas id="liveChart"></canvas>
-        </div>
+    <!-- CHART -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Attack Rate — 5 Minute Window</span>
+        <span class="panel-tag tag-live">● LIVE</span>
       </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <span class="panel-title">Model Performance</span>
-          <span class="panel-badge pb-shap">ROC-AUC</span>
-        </div>
-        <div style="padding: 8px 0;" id="results">
-          <div class="model-row">
-            <span class="model-name-r">RF · DDoS</span>
-            <span class="model-type-r mt-sup">SUPERVISED</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:100%;background:var(--muted2)"></div></div>
-            <span class="model-auc-r" style="color:var(--muted2)">1.0000</span>
-          </div>
-          <div class="model-row">
-            <span class="model-name-r">AE · DoS</span>
-            <span class="model-type-r mt-zd">ZERO-DAY</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:83%;background:var(--cyan)"></div></div>
-            <span class="model-auc-r c-cyan">0.8318</span>
-          </div>
-          <div class="model-row">
-            <span class="model-name-r">AE · DDoS</span>
-            <span class="model-type-r mt-zd">ZERO-DAY</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:86%;background:var(--cyan)"></div></div>
-            <span class="model-auc-r c-cyan">0.8592</span>
-          </div>
-          <div class="model-row">
-            <span class="model-name-r">ISO · DoS</span>
-            <span class="model-type-r mt-zd">ZERO-DAY</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:83%;background:var(--green)"></div></div>
-            <span class="model-auc-r c-green">0.8290</span>
-          </div>
-          <div class="model-row">
-            <span class="model-name-r">AE · Web</span>
-            <span class="model-type-r mt-zd">ZERO-DAY</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:77%;background:var(--green)"></div></div>
-            <span class="model-auc-r c-green">0.7694</span>
-          </div>
-          <div class="model-row">
-            <span class="model-name-r">AE · BF</span>
-            <span class="model-type-r mt-zd">ZERO-DAY</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:69%;background:var(--yellow)"></div></div>
-            <span class="model-auc-r c-yellow">0.6867</span>
-          </div>
-          <div class="model-row">
-            <span class="model-name-r">AE · Botnet</span>
-            <span class="model-type-r mt-zd">ZERO-DAY</span>
-            <div class="model-bar-r"><div class="model-bar-fill-r" style="width:57%;background:var(--orange)"></div></div>
-            <span class="model-auc-r c-orange">0.5740</span>
-          </div>
-        </div>
-      </div>
+      <div class="chart-body"><canvas id="liveChart"></canvas></div>
     </div>
 
     <!-- MODULES -->
-    <div class="modules-grid" id="modules">
-      <!-- filled by JS -->
-      <div class="loading" style="grid-column:1/-1;padding:40px 0">
-        <div class="loading-dot"></div>
-        <div class="loading-dot"></div>
-        <div class="loading-dot"></div>
-        <span style="margin-left:8px">LOADING MODULE DATA</span>
+    <div id="modules-section">
+      <div class="sec-hd">
+        <span class="sec-eyebrow">Detection Modules</span>
+        <span class="sec-meta">CICIDS2017 · 3 models per module</span>
+      </div>
+      <div class="panel">
+        <div class="mod-thead">
+          <div class="th">#</div>
+          <div class="th">Module</div>
+          <div class="th">Attack Ratio</div>
+          <div class="th">Attacks</div>
+          <div class="th">AE AUC</div>
+          <div class="th">ISO AUC</div>
+          <div class="th">Severity</div>
+        </div>
+        <div id="mod-rows"></div>
       </div>
     </div>
 
     <!-- TRIAGE -->
-    <div class="triage-grid">
-      <div class="triage-card">
-        <div class="tc-sev c-red">● Critical</div>
-        <div class="tc-val c-red">1</div>
-        <div class="tc-label">score ≥ 0.75</div>
+    <div>
+      <div class="sec-hd">
+        <span class="sec-eyebrow">Alert Triage</span>
+        <span class="sec-meta">DDoS Module · 45,149 flows</span>
       </div>
-      <div class="triage-card">
-        <div class="tc-sev c-orange">● High</div>
-        <div class="tc-val c-orange">7</div>
-        <div class="tc-label">score ≥ 0.50</div>
-      </div>
-      <div class="triage-card">
-        <div class="tc-sev c-yellow">● Medium</div>
-        <div class="tc-val c-yellow">6,330</div>
-        <div class="tc-label">score ≥ 0.25</div>
-      </div>
-      <div class="triage-card">
-        <div class="tc-sev c-green">● Low</div>
-        <div class="tc-val c-green">38,811</div>
-        <div class="tc-label">score &lt; 0.25</div>
+      <div class="triage-row">
+        <div class="tc tc-red"><div class="tc-label c-red">Critical</div><div class="tc-num c-red">1</div><div class="tc-sub">score ≥ 0.75</div></div>
+        <div class="tc tc-amber"><div class="tc-label c-amber">High</div><div class="tc-num c-amber">7</div><div class="tc-sub">score ≥ 0.50</div></div>
+        <div class="tc tc-gold"><div class="tc-label" style="color:#c8a84b">Medium</div><div class="tc-num" style="color:#c8a84b">6,330</div><div class="tc-sub">score ≥ 0.25</div></div>
+        <div class="tc tc-green"><div class="tc-label c-green">Low</div><div class="tc-num c-green">38,811</div><div class="tc-sub">score &lt; 0.25</div></div>
       </div>
     </div>
 
-    <!-- SHAP -->
-    <div class="panel" style="margin-bottom:20px">
-      <div class="panel-head">
-        <span class="panel-title">SHAP Feature Importance — DDoS Module</span>
-        <span class="panel-badge pb-shap">EXPLAINABILITY</span>
+    <!-- TWO COL -->
+    <div class="two-col">
+
+      <!-- SHAP -->
+      <div id="shap-section">
+        <div class="sec-hd">
+          <span class="sec-eyebrow">SHAP Features</span>
+          <span class="sec-meta">ISO Forest · DDoS</span>
+        </div>
+        <div class="panel">
+          <div class="shap-row"><span class="shap-rank">01</span><span class="shap-name">Bwd Packet Length Mean</span><div class="shap-track"><div class="shap-fill" style="width:100%"></div></div><span class="shap-val">0.2407</span></div>
+          <div class="shap-row"><span class="shap-rank">02</span><span class="shap-name">Bwd Packet Length Max</span><div class="shap-track"><div class="shap-fill" style="width:99%"></div></div><span class="shap-val">0.2405</span></div>
+          <div class="shap-row"><span class="shap-rank">03</span><span class="shap-name">Bwd Packet Length Std</span><div class="shap-track"><div class="shap-fill" style="width:87%"></div></div><span class="shap-val">0.2097</span></div>
+          <div class="shap-row"><span class="shap-rank">04</span><span class="shap-name">Avg Bwd Segment Size</span><div class="shap-track"><div class="shap-fill" style="width:82%"></div></div><span class="shap-val">0.1967</span></div>
+          <div class="shap-row"><span class="shap-rank">05</span><span class="shap-name">Packet Length Std</span><div class="shap-track"><div class="shap-fill" style="width:67%"></div></div><span class="shap-val">0.1612</span></div>
+          <div class="shap-row"><span class="shap-rank">06</span><span class="shap-name">Packet Length Variance</span><div class="shap-track"><div class="shap-fill" style="width:60%"></div></div><span class="shap-val">0.1437</span></div>
+          <div class="shap-row"><span class="shap-rank">07</span><span class="shap-name">Packet Length Mean</span><div class="shap-track"><div class="shap-fill" style="width:57%"></div></div><span class="shap-val">0.1380</span></div>
+          <div class="shap-row"><span class="shap-rank">08</span><span class="shap-name">Flow IAT Max</span><div class="shap-track"><div class="shap-fill" style="width:47%"></div></div><span class="shap-val">0.1131</span></div>
+          <div class="shap-row"><span class="shap-rank">09</span><span class="shap-name">Max Packet Length</span><div class="shap-track"><div class="shap-fill" style="width:43%"></div></div><span class="shap-val">0.1041</span></div>
+          <div class="shap-row"><span class="shap-rank">10</span><span class="shap-name">Average Packet Size</span><div class="shap-track"><div class="shap-fill" style="width:40%"></div></div><span class="shap-val">0.0969</span></div>
+        </div>
       </div>
-      <div>
-        <div class="sf-item"><span class="sf-rank">01</span><span class="sf-name-s">Bwd Packet Length Mean</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:100%"></div></div><span class="sf-val-s">0.2407</span></div>
-        <div class="sf-item"><span class="sf-rank">02</span><span class="sf-name-s">Bwd Packet Length Max</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:99%"></div></div><span class="sf-val-s">0.2405</span></div>
-        <div class="sf-item"><span class="sf-rank">03</span><span class="sf-name-s">Bwd Packet Length Std</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:87%"></div></div><span class="sf-val-s">0.2097</span></div>
-        <div class="sf-item"><span class="sf-rank">04</span><span class="sf-name-s">Avg Bwd Segment Size</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:82%"></div></div><span class="sf-val-s">0.1967</span></div>
-        <div class="sf-item"><span class="sf-rank">05</span><span class="sf-name-s">Packet Length Std</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:67%"></div></div><span class="sf-val-s">0.1612</span></div>
-        <div class="sf-item"><span class="sf-rank">06</span><span class="sf-name-s">Packet Length Variance</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:60%"></div></div><span class="sf-val-s">0.1437</span></div>
-        <div class="sf-item"><span class="sf-rank">07</span><span class="sf-name-s">Packet Length Mean</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:57%"></div></div><span class="sf-val-s">0.1380</span></div>
-        <div class="sf-item"><span class="sf-rank">08</span><span class="sf-name-s">Flow IAT Max</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:47%"></div></div><span class="sf-val-s">0.1131</span></div>
-        <div class="sf-item"><span class="sf-rank">09</span><span class="sf-name-s">Max Packet Length</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:43%"></div></div><span class="sf-val-s">0.1041</span></div>
-        <div class="sf-item"><span class="sf-rank">10</span><span class="sf-name-s">Average Packet Size</span><div class="sf-bar-s"><div class="sf-fill-s" style="width:40%"></div></div><span class="sf-val-s">0.0969</span></div>
+
+      <!-- MODEL PERF -->
+      <div id="results-section">
+        <div class="sec-hd">
+          <span class="sec-eyebrow">Model Performance</span>
+          <span class="sec-meta">ROC-AUC all modules</span>
+        </div>
+        <div class="panel">
+          <div class="perf-row"><span class="perf-name">RF · DDoS</span><span class="perf-type">Supervised</span><div class="perf-track"><div class="perf-fill" style="width:100%;background:var(--faint)"></div></div><span class="perf-auc c-dim">1.0000</span></div>
+          <div class="perf-row"><span class="perf-name">AE · DDoS</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:86%;background:var(--cyan)"></div></div><span class="perf-auc c-cyan">0.8592</span></div>
+          <div class="perf-row"><span class="perf-name">AE · DoS</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:83%;background:var(--cyan)"></div></div><span class="perf-auc c-cyan">0.8318</span></div>
+          <div class="perf-row"><span class="perf-name">ISO · DoS</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:83%;background:var(--green)"></div></div><span class="perf-auc c-green">0.8290</span></div>
+          <div class="perf-row"><span class="perf-name">AE · Web</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:77%;background:var(--green)"></div></div><span class="perf-auc c-green">0.7694</span></div>
+          <div class="perf-row"><span class="perf-name">AE · BF</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:69%;background:var(--amber)"></div></div><span class="perf-auc c-amber">0.6867</span></div>
+          <div class="perf-row"><span class="perf-name">AE · Botnet</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:57%;background:var(--amber)"></div></div><span class="perf-auc c-amber">0.5740</span></div>
+        </div>
       </div>
+
     </div>
 
   </main>
 
-  <!-- ALERT FEED -->
-  <aside id="alerts">
-    <div class="alert-feed-panel">
-      <div class="panel-head">
-        <span class="panel-title">Alert Feed</span>
-        <span class="panel-badge pb-live">● LIVE</span>
-      </div>
-      <div class="alert-feed-body" id="alertFeed">
-        <div class="loading" style="height:100px">
-          <div class="loading-dot"></div>
-          <div class="loading-dot"></div>
-          <div class="loading-dot"></div>
-        </div>
-      </div>
-      <div class="alert-footer">
-        <div class="af-stat"><div class="af-v c-red" id="af-crit">1</div><div class="af-l">Critical</div></div>
-        <div class="af-stat"><div class="af-v c-orange" id="af-high">7</div><div class="af-l">High</div></div>
-        <div class="af-stat"><div class="af-v c-yellow" id="af-med">6,330</div><div class="af-l">Medium</div></div>
-        <div class="af-stat"><div class="af-v c-green" id="af-supp">27,642</div><div class="af-l">Suppressed</div></div>
-      </div>
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+    <div class="rp-head">
+      <span class="rp-title">Alert Feed</span>
+      <span class="rp-live"><div class="live-dot"></div>Live</span>
+    </div>
+    <div class="alert-list" id="alertList"></div>
+    <div class="rp-foot">
+      <div class="rpf"><div class="rpf-v c-red">1</div><div class="rpf-l">Critical</div></div>
+      <div class="rpf"><div class="rpf-v c-amber">7</div><div class="rpf-l">High</div></div>
+      <div class="rpf"><div class="rpf-v" style="color:#c8a84b">6,330</div><div class="rpf-l">Medium</div></div>
+      <div class="rpf"><div class="rpf-v c-dim">27,642</div><div class="rpf-l">Supp.</div></div>
     </div>
   </aside>
 
 </div>
 
-<!-- Chart.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
 <script>
-// ── CLOCK ──
-function updateClock() {
-  const now = new Date();
-  document.getElementById('nav-time').textContent =
-    now.toTimeString().slice(0,8);
-}
-setInterval(updateClock, 1000);
-updateClock();
+// ── NODE NETWORK ──
+(function(){
+  const canvas=document.getElementById('node-canvas');
+  const ctx=canvas.getContext('2d');
+  let W,H,nodes=[];
+  const COLORS=['#00c2ff','#00e5a0','#ff4060','#f5a623','#bf5fff'];
+  const COUNT=70,DIST=140;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+  function init(){
+    nodes=[];
+    for(let i=0;i<COUNT;i++){
+      const col=COLORS[Math.floor(Math.random()*COLORS.length)];
+      nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:Math.random()*1.4+0.5,col,pulse:Math.random()*Math.PI*2});
+    }
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<DIST){
+          const h=nodes[i].col.replace('#','');
+          const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+          ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);
+          ctx.strokeStyle=`rgba(${r},${g},${b},${(1-d/DIST)*0.2})`;ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+    }
+    nodes.forEach(n=>{
+      n.pulse+=0.035;const glow=(Math.sin(n.pulse)+1)*0.5;
+      const h=n.col.replace('#','');
+      const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+      ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},${0.6+0.4*glow})`;
+      ctx.shadowColor=n.col;ctx.shadowBlur=4+5*glow;ctx.fill();ctx.shadowBlur=0;
+      n.x+=n.vx;n.y+=n.vy;
+      if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();init();draw();
+  window.addEventListener('resize',()=>{resize();init();});
+})();
 
-// ── CHART SETUP ──
-const chartCtx = document.getElementById('liveChart');
-const liveChart = new Chart(chartCtx, {
-  type: 'line',
-  data: { labels: [], datasets: [] },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 500 },
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: { color: '#6b8499', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 8, padding: 12 }
-      },
-      tooltip: {
-        backgroundColor: '#0c1420',
-        borderColor: '#1a2d3f',
-        borderWidth: 1,
-        titleColor: '#e8edf2',
-        bodyColor: '#6b8499',
-        titleFont: { family: 'JetBrains Mono', size: 10 },
-        bodyFont: { family: 'JetBrains Mono', size: 10 },
-      }
+// ── CLOCK ──
+function tick(){document.getElementById('nav-time').textContent=new Date().toTimeString().slice(0,8);}
+setInterval(tick,1000);tick();
+
+// ── CHART ──
+const liveChart=new Chart(document.getElementById('liveChart'),{
+  type:'line',data:{labels:[],datasets:[]},
+  options:{
+    responsive:true,maintainAspectRatio:false,animation:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{position:'top',labels:{color:'#3a4455',font:{family:'IBM Plex Mono',size:10},boxWidth:6,padding:14,usePointStyle:true}},
+      tooltip:{backgroundColor:'rgba(4,6,10,0.95)',borderColor:'rgba(255,255,255,0.06)',borderWidth:1,titleColor:'#eef1f6',bodyColor:'#8a96a8',titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10},padding:10}
     },
-    scales: {
-      x: {
-        ticks: { color: '#3a5068', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 6 },
-        grid: { color: '#111d2a' }
-      },
-      y: {
-        ticks: { color: '#3a5068', font: { family: 'JetBrains Mono', size: 9 } },
-        grid: { color: '#111d2a' }
-      }
+    scales:{
+      x:{ticks:{color:'#3a4455',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:6},grid:{color:'rgba(255,255,255,0.03)'},border:{color:'rgba(255,255,255,0.06)'}},
+      y:{ticks:{color:'#3a4455',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,0.03)'},border:{color:'rgba(255,255,255,0.06)'}}
     }
   }
 });
 
-// ── MODULE CARDS ──
-const COLORS = {
-  ddos:        '#ff3b5c',
-  brute_force: '#ff9500',
-  dos:         '#ffd166',
-  web_attacks: '#06d6a0',
-  botnet:      '#00d4ff',
-};
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return String(n)}
+function sevClass(r){if(r>=0.75)return['CRITICAL','sev-c'];if(r>=0.50)return['HIGH','sev-h'];if(r>=0.25)return['MEDIUM','sev-m'];return['LOW','sev-l']}
+const COLS={'DDoS':'#ff4060','Brute Force':'#f5a623','DoS':'#c8a84b','Web Attacks':'#00e5a0','Botnet':'#00c2ff'};
 
-function getRiskBadge(risk) {
-  if (risk >= 0.75) return ['CRITICAL', 'rb-crit'];
-  if (risk >= 0.50) return ['HIGH',     'rb-high'];
-  if (risk >= 0.25) return ['MEDIUM',   'rb-med'];
-  return ['LOW', 'rb-low'];
-}
-
-function fmtNum(n) {
-  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
-  return n.toString();
-}
-
-function renderModules(modules) {
-  const grid = document.getElementById('modules');
-  grid.innerHTML = modules.map((m, i) => {
-    const pct = m.total > 0 ? Math.round((m.attack / m.total) * 100) : 0;
-    const [sev, sevClass] = getRiskBadge(m.risk);
-    return `
-    <div class="mod-card">
-      <div class="mod-card-top">
-        <div class="mod-num">0${i+1}</div>
-        <div class="risk-badge ${sevClass}">${sev}</div>
-      </div>
-      <div class="mod-name-d">${m.name}</div>
-      <div class="mod-type-d">${m.type}</div>
-      <div class="mod-bar-wrap">
-        <div class="mod-bar-label">
-          <span>ATTACK RATIO</span>
-          <b>${pct}%</b>
-        </div>
-        <div class="mod-bar-track">
-          <div class="mod-bar-fill" style="width:${pct}%;background:${m.color}"></div>
-        </div>
-      </div>
-      <div class="mod-metrics-row">
-        <div class="mod-m">
-          <div class="mod-m-v" style="color:${m.color}">${fmtNum(m.attack)}</div>
-          <div class="mod-m-l">Attacks</div>
-        </div>
-        <div class="mod-m">
-          <div class="mod-m-v" style="color:var(--green)">${fmtNum(m.benign)}</div>
-          <div class="mod-m-l">Benign</div>
-        </div>
-        <div class="mod-m">
-          <div class="mod-m-v" style="color:var(--cyan)">${m.ae.toFixed(4)}</div>
-          <div class="mod-m-l">AE AUC</div>
-        </div>
-      </div>
+function renderModules(mods){
+  document.getElementById('mod-rows').innerHTML=mods.map((m,i)=>{
+    const pct=m.total>0?Math.round(m.attack/m.total*100):0;
+    const[sev,sc]=sevClass(m.risk);
+    const col=COLS[m.name]||'#3a4455';
+    return`<div class="mod-row">
+      <span class="mod-idx">${String(i+1).padStart(2,'0')}</span>
+      <div><div class="mod-name-t">${m.name}</div><div class="mod-type-t">${m.type}</div></div>
+      <div class="ratio-wrap"><div class="ratio-track"><div class="ratio-fill" style="width:${pct}%;background:${col}"></div></div><span class="ratio-pct">${pct}%</span></div>
+      <span class="cell-num">${fmt(m.attack)}</span>
+      <span class="cell-num cell-hi">${m.ae.toFixed(4)}</span>
+      <span class="cell-num">${m.iso.toFixed(4)}</span>
+      <span class="sev ${sc}">${sev}</span>
     </div>`;
   }).join('');
 }
 
-// ── ALERT FEED ──
-const ALERT_TEMPLATES = [
-  { sev: 'CRITICAL', sevClass: 'sev-crit', module: 'DDoS Module',       detail: 'risk=0.9096 · ae=1.000 · iso=0.987' },
-  { sev: 'HIGH',     sevClass: 'sev-high', module: 'DDoS Module',       detail: 'risk=0.7127 · ae=0.954 · iso=0.871' },
-  { sev: 'HIGH',     sevClass: 'sev-high', module: 'Web Attacks',        detail: 'risk=0.6841 · ae=0.912 · SQLi pattern' },
-  { sev: 'MEDIUM',   sevClass: 'sev-med',  module: 'Brute Force',        detail: 'risk=0.4821 · iso=0.741 · SSH-Patator' },
-  { sev: 'MEDIUM',   sevClass: 'sev-med',  module: 'DoS Module',         detail: 'risk=0.3912 · ae=0.701 · Slowloris' },
-  { sev: 'MEDIUM',   sevClass: 'sev-med',  module: 'Botnet Module',      detail: 'risk=0.2988 · ae=0.612 · C2 beacon' },
-  { sev: 'LOW',      sevClass: 'sev-low',  module: 'Web Attacks',        detail: 'risk=0.1204 · ae=0.341 · monitor' },
-  { sev: 'SUPPRESSED', sevClass: 'sev-supp', module: 'All Modules',      detail: 'risk=0.042 · BENIGN · normal traffic' },
+const ALERTS=[
+  {sev:'CRITICAL',col:'#ff4060',mod:'DDoS',det:'risk=0.9096 · ae=1.000 · iso=0.987'},
+  {sev:'HIGH',col:'#f5a623',mod:'DDoS',det:'risk=0.7127 · ae=0.954 · iso=0.871'},
+  {sev:'HIGH',col:'#f5a623',mod:'Web Attacks',det:'risk=0.6841 · ae=0.912 · SQLi'},
+  {sev:'MEDIUM',col:'#c8a84b',mod:'Brute Force',det:'risk=0.4821 · iso=0.741 · SSH'},
+  {sev:'MEDIUM',col:'#c8a84b',mod:'DoS',det:'risk=0.3912 · ae=0.701 · Slowloris'},
+  {sev:'MEDIUM',col:'#c8a84b',mod:'Botnet',det:'risk=0.2988 · ae=0.612 · C2'},
+  {sev:'LOW',col:'#00e5a0',mod:'Web Attacks',det:'risk=0.1204 · ae=0.341'},
+  {sev:'SUPP',col:'#3a4455',mod:'All Modules',det:'risk=0.042 · BENIGN'},
 ];
+let ai=0;
+function addAlert(){
+  const a=ALERTS[ai%ALERTS.length];ai++;
+  const t=new Date().toTimeString().slice(0,8);
+  const el=document.createElement('div');el.className='alert-entry';
+  el.innerHTML=`<div class="ae-top"><span class="ae-sev" style="color:${a.col}">${a.sev}</span><span class="ae-time">${t}</span></div><div class="ae-mod">${a.mod}</div><div class="ae-det">${a.det}</div>`;
+  const list=document.getElementById('alertList');
+  list.insertBefore(el,list.firstChild);
+  while(list.children.length>60)list.removeChild(list.lastChild);
+}
+for(let i=0;i<8;i++)addAlert();
+setInterval(addAlert,9000);
 
-let alertIndex = 0;
-function addAlert() {
-  const feed = document.getElementById('alertFeed');
-  const t = ALERT_TEMPLATES[alertIndex % ALERT_TEMPLATES.length];
-  alertIndex++;
-  const now = new Date().toTimeString().slice(0,8);
-  const el = document.createElement('div');
-  el.className = 'alert-item';
-  el.innerHTML = `
-    <div class="alert-top">
-      <span class="alert-sev ${t.sevClass}">${t.sev}</span>
-      <span class="alert-time">${now}</span>
-    </div>
-    <div class="alert-module">${t.module}</div>
-    <div class="alert-detail">${t.detail}</div>`;
-  feed.insertBefore(el, feed.firstChild);
-  // keep max 50 alerts
-  while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+async function fetchMetrics(){
+  try{
+    const d=await(await fetch('/api/metrics')).json();
+    document.getElementById('kpi-attacks').textContent=fmt(d.total_attacks);
+    document.getElementById('kpi-benign').textContent=fmt(d.total_benign);
+    document.getElementById('last-update').textContent='Updated '+d.timestamp;
+    document.getElementById('prom-label').textContent=d.prometheus_live?'Prometheus · Live':'Prometheus · Static';
+    document.getElementById('sb-prom').textContent=d.prometheus_live?'Live':'—';
+    renderModules(d.modules);
+  }catch(e){console.warn(e);}
 }
 
-// init feed
-for (let i = 0; i < 8; i++) addAlert();
-setInterval(addAlert, 8000);
-
-// ── FETCH METRICS ──
-async function fetchMetrics() {
-  try {
-    const res = await fetch('/api/metrics');
-    const data = await res.json();
-
-    document.getElementById('m-attacks').textContent = fmtNum(data.total_attacks);
-    document.getElementById('m-benign').textContent  = fmtNum(data.total_benign);
-
-    const promStatus = document.getElementById('prom-status');
-    if (data.prometheus_live) {
-      promStatus.textContent = 'LIVE';
-      promStatus.style.color = 'var(--green)';
-    } else {
-      promStatus.textContent = 'STATIC';
-      promStatus.style.color = 'var(--yellow)';
-    }
-
-    renderModules(data.modules);
-  } catch(e) {
-    console.warn('Metrics fetch failed', e);
-  }
-}
-
-// ── FETCH CHART ──
-async function fetchChart() {
-  try {
-    const res = await fetch('/api/chart');
-    const series = await res.json();
-    if (!series.length) return;
-
-    // build labels from first series
-    const labels = series[0].data.map(p => {
-      const d = new Date(p[0]);
-      return d.toTimeString().slice(0,5);
-    });
-
-    liveChart.data.labels = labels;
-    liveChart.data.datasets = series.map(s => ({
-      label: s.name,
-      data: s.data.map(p => p[1]),
-      borderColor: s.color,
-      backgroundColor: s.color + '12',
-      borderWidth: 1.5,
-      pointRadius: 0,
-      tension: 0.4,
-      fill: false,
-    }));
+async function fetchChart(){
+  try{
+    const s=await(await fetch('/api/chart')).json();
+    if(!s.length){demoChart();return;}
+    liveChart.data.labels=s[0].data.map(p=>new Date(p[0]).toTimeString().slice(0,5));
+    liveChart.data.datasets=s.map(x=>({label:x.name,data:x.data.map(p=>p[1]),borderColor:x.color,backgroundColor:'transparent',borderWidth:1,pointRadius:0,tension:0.3}));
     liveChart.update('none');
-  } catch(e) {
-    // if prometheus not running, show demo data
-    renderDemoChart();
-  }
+  }catch(e){demoChart();}
 }
 
-function renderDemoChart() {
-  const modules = [
-    { name: 'DDoS',        color: '#ff3b5c', base: 1200 },
-    { name: 'Brute Force', color: '#ff9500', base: 180  },
-    { name: 'DoS',         color: '#ffd166', base: 890  },
-    { name: 'Web Attacks', color: '#06d6a0', base: 22   },
-    { name: 'Botnet',      color: '#00d4ff', base: 19   },
-  ];
-  const labels = Array.from({length: 20}, (_, i) => {
-    const d = new Date(Date.now() - (19-i)*15000);
-    return d.toTimeString().slice(0,5);
-  });
-  liveChart.data.labels = labels;
-  liveChart.data.datasets = modules.map(m => ({
-    label: m.name,
-    data: labels.map(() => m.base + (Math.random()-0.5)*m.base*0.3),
-    borderColor: m.color,
-    backgroundColor: m.color + '10',
-    borderWidth: 1.5,
-    pointRadius: 0,
-    tension: 0.4,
-    fill: false,
-  }));
+function demoChart(){
+  const mods=[{name:'DDoS',color:'#ff4060',base:1200},{name:'Brute Force',color:'#f5a623',base:180},{name:'DoS',color:'#c8a84b',base:890},{name:'Web Attacks',color:'#00e5a0',base:22},{name:'Botnet',color:'#00c2ff',base:19}];
+  const labels=Array.from({length:20},(_,i)=>new Date(Date.now()-(19-i)*15000).toTimeString().slice(0,5));
+  liveChart.data.labels=labels;
+  liveChart.data.datasets=mods.map(m=>({label:m.name,data:labels.map(()=>m.base+(Math.random()-0.5)*m.base*0.25),borderColor:m.color,backgroundColor:'transparent',borderWidth:1,pointRadius:0,tension:0.3}));
   liveChart.update('none');
 }
 
-// ── INIT ──
-fetchMetrics();
-fetchChart();
-setInterval(fetchMetrics, 10000);
-setInterval(fetchChart, 30000);
+fetchMetrics();fetchChart();
+setInterval(fetchMetrics,10000);
+setInterval(fetchChart,30000);
 </script>
 </body>
 </html>
