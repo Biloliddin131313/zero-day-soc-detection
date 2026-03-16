@@ -34,11 +34,11 @@ Key finding: The Autoencoder outperforms Isolation Forest on 4 out of 5 attack t
 ## Models Used
 
 ### Supervised Baseline
-- **Random Forest** — trained with labels, near-perfect detection across all modules
+- **Random Forest** - trained with labels, near-perfect detection across all modules
 
 ### Unsupervised (Zero-Day Capable)
-- **Isolation Forest** — trained on BENIGN traffic only, detects deviations from normal behaviour
-- **Autoencoder** — learns to reconstruct normal traffic, flags high reconstruction error as anomalies
+- **Isolation Forest** - trained on BENIGN traffic only, detects deviations from normal behaviour
+- **Autoencoder** - learns to reconstruct normal traffic, flags high reconstruction error as anomalies
 
 ---
 
@@ -73,7 +73,7 @@ This system runs live with real-time metrics pushed to Prometheus and visualised
 
 ### Starting the system
 
-Terminal 1 — Start the SOC exporter:
+Terminal 1 - Start the SOC exporter:
 ```bash
 cd ~/zero-day-soc-detection
 source venv/bin/activate
@@ -100,7 +100,7 @@ Grafana starts automatically as a system service.
 
 ## Dataset
 
-CICIDS2017 — Canadian Institute for Cybersecurity Intrusion Detection System 2017
+CICIDS2017 - Canadian Institute for Cybersecurity Intrusion Detection System 2017
 
 - Captured over 5 days in a realistic corporate network environment
 - Contains both benign traffic and labelled attacks
@@ -153,4 +153,4 @@ This project was developed for academic purposes as part of a BSc dissertation a
 
 ---
 
-Built by Biloliddin Turaev — Southampton Solent University 2026
+Built by Biloliddin Turaev  Southampton Solent University 2026
