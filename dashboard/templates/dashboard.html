@@ -247,7 +247,7 @@ nav{
       <button class="sb-item active" onclick="showPage('overview')"><span class="sb-icon">◈</span><span class="sb-name">Overview</span><span class="sb-badge">Live</span></button>
       <button class="sb-item" onclick="showPage('modules')"><span class="sb-icon">⬡</span><span class="sb-name">Modules</span><span class="sb-badge">5</span></button>
       <button class="sb-item" onclick="showPage('intelligence')"><span class="sb-icon">◎</span><span class="sb-name">Intelligence</span><span class="sb-badge">VT</span></button>
-      <button class="sb-item" onclick="showPage('explainer')"><span class="sb-icon">✦</span><span class="sb-name">AI Explainer</span><span class="sb-badge">Claude</span></button>
+      <button class="sb-item" onclick="showPage('explainer')"><span class="sb-icon">✦</span><span class="sb-name">AI Explainer</span><span class="sb-badge">AI</span></button>
       <button class="sb-item" onclick="showPage('results')"><span class="sb-icon">◇</span><span class="sb-name">Results</span></button>
       <button class="sb-item" onclick="showPage('reports')"><span class="sb-icon">↓</span><span class="sb-name">Reports</span></button>
     </div>
@@ -354,10 +354,9 @@ nav{
           </div>
         </div>
         <div class="panel">
-          <div class="panel-head"><span class="panel-title">How It Works</span><span class="panel-tag tag-amber">Threat Intel</span></div>
+          <div class="panel-head"><span class="panel-title">Detailed Analysis</span><span class="panel-tag tag-amber">Threat Intel</span></div>
           <div style="padding:16px">
-            <p style="font-size:13px;color:var(--dim);line-height:1.8;margin-bottom:12px;font-weight:300">VirusTotal aggregates 70+ antivirus engines. Each IP lookup returns malicious detections, reputation score, country, and ISP data.</p>
-            <p style="font-size:13px;color:var(--dim);line-height:1.8;font-weight:300">In a production SOC, every CRITICAL alert automatically triggers a VT lookup — enriching the alert with real-world threat context in seconds.</p>
+            <div id="vt-detail"><div class="vt-loading">Run enrichment to see detailed analysis</div></div>
           </div>
         </div>
       </div>
@@ -374,29 +373,29 @@ nav{
     <div class="page" id="page-explainer">
       <div class="page-hd">
         <div class="page-eyebrow">AI Explainer</div>
-        <div class="page-title">Claude AI Alert Analysis</div>
-        <div class="page-sub">Natural language explanations powered by Claude claude-sonnet-4-20250514</div>
+        <div class="page-title">AI Alert Explainer</div>
+        <div class="page-sub">AI-powered alert analysis · 0xDay Detection Platform</div>
       </div>
       <div class="two-col">
         <div>
           <div class="panel-head" style="border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:#fff"><span class="panel-title">Select Alert to Explain</span></div>
           <div style="border:1px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:12px;background:#fff">
             <div id="explain-alerts"></div>
-            <button class="explain-btn" id="explain-btn" onclick="runExplain()">Explain with Claude AI →</button>
+            <button class="explain-btn" id="explain-btn" onclick="runExplain()">Explain with AI →</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="explain-output">
             <div class="ai-header">
               <span class="ai-badge">Claude AI</span>
-              <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">claude-sonnet-4-20250514</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">0xDay AI · Powered by Large Language Model</span>
             </div>
             <p id="explain-output" style="font-size:13px;color:var(--faint);line-height:1.8;font-style:italic">Select an alert and click Explain to generate an AI analysis.</p>
           </div>
           <div class="panel">
             <div class="panel-head"><span class="panel-title">How It Works</span></div>
             <div style="padding:14px 18px">
-              <p style="font-size:12px;color:var(--dim);line-height:1.8;font-weight:300">Claude analyses the risk score, model anomaly outputs, SHAP feature importance values, and attack classification to generate a plain English explanation of exactly what happened and what the analyst should do next.</p>
+              <p style="font-size:12px;color:var(--dim);line-height:1.8;font-weight:300">The AI analyses the risk score, model anomaly outputs, SHAP feature importance values, and attack classification to generate a plain English explanation of exactly what happened and what the analyst should do next.</p>
             </div>
           </div>
         </div>
@@ -583,11 +582,45 @@ async function runExplain(){
       body:JSON.stringify({module:a.data.module,risk:a.data.risk,ae_score:a.data.ae,iso_score:a.data.iso,attack_count:a.data.attacks,top_features:a.data.features})});
     const d=await res.json();
     out.style.fontStyle='normal';out.style.color='var(--dim)';
-    out.textContent=d.explanation;
+    try{
+      const j=JSON.parse(d.explanation);
+      out.innerHTML=`
+        <div style="display:flex;flex-direction:column;gap:10px" id="ai-sections">
+          <div style="border-left:3px solid #e53935;border-radius:0 6px 6px 0;padding:12px 16px;background:#fff5f5">
+            <div style="font-size:9px;font-weight:700;color:#e53935;letter-spacing:1px;margin-bottom:5px;text-transform:uppercase">Threat Assessment</div>
+            <div style="font-size:13px;color:#333;line-height:1.7" id="ai-threat"></div>
+          </div>
+          <div style="border-left:3px solid #2e7d32;border-radius:0 6px 6px 0;padding:12px 16px;background:#f5fbf5;opacity:0;transition:opacity 0.3s" id="sec-why">
+            <div style="font-size:9px;font-weight:700;color:#2e7d32;letter-spacing:1px;margin-bottom:5px;text-transform:uppercase">Why It Was Flagged</div>
+            <div style="font-size:13px;color:#333;line-height:1.7" id="ai-why"></div>
+          </div>
+          <div style="border-left:3px solid #0078d4;border-radius:0 6px 6px 0;padding:12px 16px;background:#f5f9ff;opacity:0;transition:opacity 0.3s" id="sec-actions">
+            <div style="font-size:9px;font-weight:700;color:#0078d4;letter-spacing:1px;margin-bottom:5px;text-transform:uppercase">Immediate Actions</div>
+            <ol style="margin:0;padding-left:18px" id="ai-actions"></ol>
+          </div>
+          <div style="border-left:3px solid #b45309;border-radius:0 6px 6px 0;padding:12px 16px;background:#fffbf0;opacity:0;transition:opacity 0.3s" id="sec-conf">
+            <div style="font-size:9px;font-weight:700;color:#b45309;letter-spacing:1px;margin-bottom:5px;text-transform:uppercase">Confidence</div>
+            <div style="font-size:13px;color:#333;line-height:1.7" id="ai-conf"></div>
+          </div>
+        </div>`;
+      function typeText(el,text,speed,cb){let i=0;el.textContent='';const t=setInterval(()=>{el.textContent+=text[i];i++;if(i>=text.length){clearInterval(t);if(cb)cb();}},speed);}
+      typeText(document.getElementById('ai-threat'),j.threat,18,()=>{
+        document.getElementById('sec-why').style.opacity='1';
+        typeText(document.getElementById('ai-why'),j.why,18,()=>{
+          document.getElementById('sec-actions').style.opacity='1';
+          const actEl=document.getElementById('ai-actions');
+          let idx=0;
+          function nextAction(){if(idx>=j.actions.length){document.getElementById('sec-conf').style.opacity='1';typeText(document.getElementById('ai-conf'),j.confidence,18,null);return;}const li=document.createElement('li');li.style.cssText='font-size:13px;color:#333;line-height:1.8;margin-bottom:3px';actEl.appendChild(li);typeText(li,j.actions[idx],18,()=>{idx++;nextAction();});}
+          nextAction();
+        });
+      });
+    }catch(ex){
+      out.style.color='var(--dim)';out.innerHTML=`<p style="font-size:13px;line-height:1.8">${d.explanation}</p>`;
+    }
   }catch(e){
     out.style.color='var(--red)';out.textContent='Request failed: '+e.message;
   }
-  btn.disabled=false;btn.textContent='Explain with Claude AI →';
+  btn.disabled=false;btn.textContent='Explain with AI →';
 }
 renderExplainAlerts();
 
@@ -609,6 +642,24 @@ async function loadMitre(){
 loadMitre();
 
 // ── VT ──
+function showFwRule(platform, ip){
+  const rules = {
+    iptables: `iptables -A INPUT -s ${ip} -j DROP\niptables -A OUTPUT -d ${ip} -j DROP\niptables -A FORWARD -s ${ip} -j DROP`,
+    windows: `netsh advfirewall firewall add rule name="Block ${ip}" dir=in action=block remoteip=${ip}\nnetsh advfirewall firewall add rule name="Block ${ip} out" dir=out action=block remoteip=${ip}`,
+    cisco: `ip access-list extended BLOCK-THREATS\n deny ip host ${ip} any\n deny ip any host ${ip}\n permit ip any any`
+  };
+  document.getElementById('fw-rule-text').textContent = rules[platform].replace(/\\n/g, '\n');
+  document.querySelectorAll('#fw-tabs button').forEach(b=>{ b.style.background='#fff'; b.style.color='var(--dim)'; b.style.borderColor='var(--line)'; });
+  event.target.style.background='var(--cyan)'; event.target.style.color='#fff'; event.target.style.borderColor='var(--cyan)';
+}
+function copyFwRule(){
+  const text = document.getElementById('fw-rule-text').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    btn.textContent='Copied';
+    setTimeout(()=>btn.textContent='Copy Rule', 2000);
+  });
+}
 async function enrichThreat(){
   document.getElementById('vt-result').innerHTML='<div class="vt-loading">Querying VirusTotal...</div>';
   try{
@@ -616,14 +667,43 @@ async function enrichThreat(){
     const vt=d.ip_enrichment;
     if(vt.error){document.getElementById('vt-result').innerHTML=`<div class="vt-loading" style="color:var(--amber)">Error: ${vt.error}</div>`;return;}
     const repColor=vt.reputation<0?'vt-mal':vt.reputation>0?'vt-ok':'';
+    const verdict = vt.malicious>=5 ? {label:'MALICIOUS',color:'var(--red)',bg:'#fff5f5'} :
+                    vt.malicious>=1||vt.suspicious>=3 ? {label:'SUSPICIOUS',color:'var(--amber)',bg:'#fffbf0'} :
+                    {label:'CLEAN',color:'var(--green)',bg:'#f5fbf5'};
     document.getElementById('vt-result').innerHTML=`
-      <div class="vt-ip-label">⚠ ${vt.ip}</div>
-      <div class="vt-row"><span class="vt-k">Malicious engines</span><span class="vt-v vt-mal">${vt.malicious}</span></div>
-      <div class="vt-row"><span class="vt-k">Suspicious</span><span class="vt-v vt-sus">${vt.suspicious}</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="vt-ip-label" style="margin-bottom:0">⚠ ${vt.ip}</div>
+        <div style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:4px;background:${verdict.bg};color:${verdict.color};letter-spacing:1px;border:1px solid ${verdict.color}">${verdict.label}</div>
+      </div>
+      <div class="vt-row"><span class="vt-k">Malicious Engines</span><span class="vt-v ${vt.malicious>0?'vt-mal':''}">${vt.malicious} / ${vt.total_engines}</span></div>
+      <div class="vt-row"><span class="vt-k">Suspicious</span><span class="vt-v ${vt.suspicious>0?'vt-sus':''}">${vt.suspicious}</span></div>
       <div class="vt-row"><span class="vt-k">Harmless</span><span class="vt-v vt-ok">${vt.harmless}</span></div>
-      <div class="vt-row"><span class="vt-k">Reputation</span><span class="vt-v ${repColor}">${vt.reputation}</span></div>
+      <div class="vt-row"><span class="vt-k">Reputation Score</span><span class="vt-v ${repColor}">${vt.reputation}</span></div>
+      <div class="vt-row"><span class="vt-k">Last Analysis</span><span class="vt-v">${vt.last_analysis}</span></div>`;
+    document.getElementById('vt-detail').innerHTML=`
       <div class="vt-row"><span class="vt-k">Country</span><span class="vt-v">${vt.country}</span></div>
-      <div class="vt-row"><span class="vt-k">Owner</span><span class="vt-v" style="font-size:10px">${vt.owner}</span></div>`;
+      <div class="vt-row"><span class="vt-k">Owner / ISP</span><span class="vt-v" style="font-size:10px">${vt.owner}</span></div>
+      <div class="vt-row"><span class="vt-k">ASN</span><span class="vt-v">AS${vt.asn}</span></div>
+      <div class="vt-row"><span class="vt-k">Undetected</span><span class="vt-v">${vt.undetected}</span></div>
+      ${vt.categories&&vt.categories.length?`<div class="vt-row"><span class="vt-k">Categories</span><span class="vt-v" style="font-size:10px;text-align:right;max-width:180px">${vt.categories.join(' · ')}</span></div>`:''}
+      <div style="margin-top:12px;padding:10px;background:var(--surface);border-radius:6px;font-size:11px;color:var(--dim);line-height:1.7">
+        <span style="font-weight:600;color:var(--text)">SOC Note:</span> This IP was analysed by ${vt.total_engines} security engines.
+        ${vt.malicious>0?`<span style="color:var(--red)">${vt.malicious} engine(s) confirm malicious activity.</span> Recommend blocking at perimeter firewall.`:'No confirmed malicious activity detected by any engine.'}
+      </div>
+      ${vt.malicious>0||vt.suspicious>=3?`<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+        <div style="font-size:9px;font-weight:700;color:var(--text);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Block Rule Generator</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px" id="fw-tabs">
+          <button onclick="showFwRule('iptables','${vt.ip}')" style="font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid var(--cyan);background:var(--cyan);color:#fff;cursor:pointer">Linux iptables</button>
+          <button onclick="showFwRule('windows','${vt.ip}')" style="font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--dim);cursor:pointer">Windows FW</button>
+          <button onclick="showFwRule('cisco','${vt.ip}')" style="font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--dim);cursor:pointer">Cisco ACL</button>
+        </div>
+        <div id="fw-rule-box" style="background:#f8f9fa;border:1px solid var(--line);border-radius:6px;padding:12px;position:relative">
+          <pre id="fw-rule-text" style="font-family:var(--mono);font-size:11px;color:#333;margin:0;white-space:pre-wrap;line-height:1.7">iptables -A INPUT -s ${vt.ip} -j DROP
+iptables -A OUTPUT -d ${vt.ip} -j DROP
+iptables -A FORWARD -s ${vt.ip} -j DROP</pre>
+          <button onclick="copyFwRule()" style="position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:9px;font-weight:600;padding:3px 8px;border-radius:3px;border:1px solid var(--line);background:#fff;color:var(--dim);cursor:pointer" id="copy-btn">Copy Rule</button>
+        </div>
+      </div>`:''}`;
   }catch(e){document.getElementById('vt-result').innerHTML=`<div class="vt-loading" style="color:var(--red)">Failed: ${e.message}</div>`;}
 }
 

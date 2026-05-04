@@ -1,4 +1,6 @@
-jupyter nbconvert --to script zero_day_detection.ipynbimport os
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, jsonify, render_template, send_file, request
 import requests, json, random, urllib.request
 from datetime import datetime
@@ -58,7 +60,13 @@ def vt_lookup(ip):
         with urllib.request.urlopen(req,timeout=6) as r: data=json.loads(r.read())
         a=data.get("data",{}).get("attributes",{})
         s=a.get("last_analysis_stats",{})
-        return {"ip":ip,"country":a.get("country","?"),"owner":a.get("as_owner","?"),"malicious":s.get("malicious",0),"suspicious":s.get("suspicious",0),"harmless":s.get("harmless",0),"reputation":a.get("reputation",0),"error":None}
+        cats = list(a.get("categories", {}).values())[:3]
+        last = a.get("last_analysis_date", 0)
+        from datetime import datetime as dt
+        last_str = dt.fromtimestamp(last).strftime("%Y-%m-%d %H:%M") if last else "Unknown"
+        total = s.get("malicious",0)+s.get("suspicious",0)+s.get("harmless",0)+s.get("undetected",0)
+        asn = a.get("asn","?")
+        return {"ip":ip,"country":a.get("country","?"),"owner":a.get("as_owner","?"),"malicious":s.get("malicious",0),"suspicious":s.get("suspicious",0),"harmless":s.get("harmless",0),"undetected":s.get("undetected",0),"reputation":a.get("reputation",0),"categories":cats,"last_analysis":last_str,"total_engines":total,"asn":asn,"error":None}
     except Exception as e:
         return {"ip":ip,"error":str(e),"malicious":0,"suspicious":0,"harmless":0,"reputation":0,"country":"?","owner":"?"}
 
@@ -100,7 +108,7 @@ def explain_alert():
     attacks = data.get("attack_count", 0)
     features = data.get("top_features", [])
     sev = "CRITICAL" if risk >= 0.75 else "HIGH" if risk >= 0.5 else "MEDIUM"
-    prompt = f"You are a SOC analyst AI assistant. Explain this network security alert in plain English in 3-4 sentences. Be specific and actionable. Alert module: {module}. Severity: {sev}. Risk score: {risk}. Autoencoder anomaly score: {ae}. Isolation Forest score: {iso}. Attacks detected: {attacks}. Top SHAP features: {', '.join(features)}. Explain what this means, why the model flagged it, and what the analyst should do next."
+    prompt = f"""You are a SOC analyst AI. Return ONLY a valid JSON object, no markdown, no backticks, no explanation outside the JSON. Use this exact format: {{"threat":"one sentence on what attack is happening","why":"one sentence on which SHAP features triggered detection and why","actions":["action 1","action 2","action 3"],"confidence":"one sentence on model confidence and whether this is a true positive"}} Alert details: module={module}, severity={sev}, risk={risk}, ae={ae}, iso={iso}, attacks={attacks}, features={', '.join(features)}"""
     try:
         resp = requests.post(
             "https://api.anthropic.com/v1/messages",
@@ -109,7 +117,7 @@ def explain_alert():
                 "x-api-key": os.environ.get("ANTHROPIC_API_KEY",""),
                 "anthropic-version": "2023-06-01"
             },
-            json={"model": "claude-sonnet-4-20250514", "max_tokens": 300, "messages": [{"role": "user", "content": prompt}]},
+            json={"model": "claude-sonnet-4-20250514", "max_tokens": 400, "messages": [{"role": "user", "content": prompt}]},
             timeout=15
         )
         result = resp.json()
