@@ -6,3 +6,6 @@ __pycache__/
 
 # Keep models and results
 .env
+.env
+.env.backup
+.ipynb_checkpoints/

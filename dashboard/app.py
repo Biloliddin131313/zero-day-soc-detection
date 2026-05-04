@@ -1,4 +1,4 @@
-import os
+jupyter nbconvert --to script zero_day_detection.ipynbimport os
 from flask import Flask, jsonify, render_template, send_file, request
 import requests, json, random, urllib.request
 from datetime import datetime

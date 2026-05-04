@@ -5,277 +5,226 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>0xDay — Security Operations Centre</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg:     #04060a;
-  --dark:   #060810;
-  --card:   #0a0d14;
-  --line:   rgba(255,255,255,0.06);
-  --line2:  rgba(255,255,255,0.03);
-  --text:   #eef1f6;
-  --dim:    #8a96a8;
-  --faint:  #3a4455;
-  --cyan:   #00c2ff;
-  --green:  #00e5a0;
-  --red:    #ff4060;
-  --amber:  #f5a623;
-  --purple: #bf5fff;
-  --sans:   'IBM Plex Sans', sans-serif;
-  --mono:   'IBM Plex Mono', monospace;
+  --bg:#ffffff;--surface:#f7f8fa;--card:#f0f2f5;
+  --line:#e4e7ec;--line2:#edf0f4;
+  --text:#0a0d12;--dim:#3a4458;--faint:#6a7385;
+  --cyan:#0078d4;--green:#0e8a5a;--red:#d63b3b;--amber:#b85c00;--purple:#6b2fbd;
+  --sans:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
 }
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
 
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-
-/* ── CANVAS ── */
-#node-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35}
-
-/* ── TOPBAR ── */
+/* NAV */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  height:56px;
+  position:fixed;top:0;left:0;right:0;z-index:100;height:52px;
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 40px;
-  background:rgba(4,6,10,0.92);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--line);
+  padding:0 28px;background:#fff;border-bottom:1px solid var(--line);
 }
-.nav-left{display:flex;align-items:center;gap:20px}
-.nav-logo{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:1px}
+.nav-left{display:flex;align-items:center;gap:14px}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);text-decoration:none}
 .nav-logo span{color:var(--cyan)}
-.nav-sep{width:1px;height:16px;background:var(--line)}
-.nav-tag{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:2px;text-transform:uppercase}
-.nav-right{display:flex;align-items:center;gap:20px}
-.live-pill{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--dim)}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2.5s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-#nav-time{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:1px}
-.nav-btn{
-  font-family:var(--mono);font-size:10px;font-weight:600;
-  color:#050608;background:var(--cyan);
-  padding:7px 16px;border-radius:2px;text-decoration:none;
-  letter-spacing:1px;text-transform:uppercase;
-  transition:all 0.2s;
-}
-.nav-btn:hover{background:#33d4ff;box-shadow:0 0 20px rgba(0,194,255,0.3)}
+.nav-sep{width:1px;height:14px;background:var(--line)}
+.nav-tag{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:1.5px;text-transform:uppercase}
+.nav-right{display:flex;align-items:center;gap:14px}
+.live-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+#nav-time{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.nav-btn{font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;background:var(--cyan);padding:6px 14px;border-radius:4px;text-decoration:none;letter-spacing:0.5px;transition:all 0.2s}
+.nav-btn:hover{background:#0066b8}
 
-/* ── LAYOUT ── */
-.shell{padding-top:56px;display:grid;grid-template-columns:200px 1fr 292px;min-height:calc(100vh - 56px);position:relative;z-index:1}
+/* SHELL */
+.shell{display:grid;grid-template-columns:200px 1fr;height:calc(100vh - 52px);margin-top:52px}
 
-/* ── SIDEBAR ── */
-.sidebar{
-  border-right:1px solid var(--line);
-  background:rgba(4,6,10,0.7);
-  backdrop-filter:blur(20px);
-  padding:28px 0;
-  display:flex;flex-direction:column;gap:28px;
-  position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;
-}
-.sb-group{padding:0 16px}
-.sb-heading{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-left:8px}
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--line);background:#fff;display:flex;flex-direction:column;overflow-y:auto}
+.sb-section{padding:16px 10px 0}
+.sb-heading{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;padding-left:8px}
 .sb-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:7px 10px;border-radius:2px;cursor:pointer;
-  transition:background 0.15s;text-decoration:none;margin-bottom:1px;
+  display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;
+  cursor:pointer;transition:all 0.15s;text-decoration:none;margin-bottom:1px;
+  border:none;background:transparent;width:100%;text-align:left;
 }
-.sb-item:hover{background:rgba(255,255,255,0.04)}
-.sb-item.active{background:rgba(255,255,255,0.06);border-left:2px solid var(--cyan);padding-left:8px}
+.sb-item:hover{background:var(--surface)}
+.sb-item.active{background:#e8f1fb;color:var(--cyan)}
+.sb-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
 .sb-name{font-size:13px;font-weight:500;color:var(--dim)}
-.sb-item.active .sb-name{color:var(--text)}
-.sb-badge{font-family:var(--mono);font-size:10px;color:var(--faint)}
-.sb-div{height:1px;background:var(--line);margin:0 16px}
-.mod-line{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:2px;cursor:pointer;transition:background 0.15s;margin-bottom:1px}
-.mod-line:hover{background:rgba(255,255,255,0.03)}
-.ml-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.ml-name{font-size:12px;font-weight:500;color:var(--dim);flex:1}
-.ml-auc{font-family:var(--mono);font-size:10px;color:var(--faint)}
-.sb-sys-row{display:flex;justify-content:space-between;align-items:center;padding:5px 10px}
-.sb-sys-k{font-size:12px;color:var(--faint);font-weight:400}
-.sb-sys-v{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.sb-item.active .sb-name{color:var(--cyan)}
+.sb-badge{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--faint);background:var(--card);padding:1px 5px;border-radius:3px}
+.sb-item.active .sb-badge{background:rgba(0,120,212,0.1);color:var(--cyan)}
+.sb-div{height:1px;background:var(--line);margin:10px 10px}
+.sb-mod{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;cursor:pointer;transition:background 0.15s;margin-bottom:1px}
+.sb-mod:hover{background:var(--surface)}
+.sb-mod-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sb-mod-name{font-size:12px;color:var(--dim);flex:1;font-weight:400}
+.sb-mod-auc{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--line)}
+.sb-sys-row{display:flex;justify-content:space-between;padding:3px 8px}
+.sb-sys-k{font-size:11px;color:var(--faint)}
+.sb-sys-v{font-family:var(--mono);font-size:10px;color:var(--dim)}
 
-/* ── MAIN ── */
-main{padding:32px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:28px}
+/* MAIN */
+.main{overflow-y:auto;overflow-x:hidden;padding:28px 32px;background:var(--surface);display:flex;flex-direction:column;gap:20px}
 
-/* ── SEC HEADER ── */
-.sec-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
-.sec-eyebrow{
-  font-family:var(--mono);font-size:10px;font-weight:500;
-  color:var(--cyan);letter-spacing:3px;text-transform:uppercase;
-  display:flex;align-items:center;gap:10px;
-}
-.sec-eyebrow::before{content:'';width:20px;height:1px;background:var(--cyan)}
-.sec-meta{font-family:var(--mono);font-size:10px;color:var(--faint)}
+/* PAGES */
+.page{display:none;flex-direction:column;gap:20px;animation:fadeUp 0.2s ease}
+.page.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── KPI ROW ── */
-.kpi-row{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:2px;overflow:hidden;
-}
-.kpi{
-  background:var(--bg);padding:22px 24px;
-  transition:background 0.2s;position:relative;overflow:hidden;
-}
-.kpi:hover{background:var(--card)}
-.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;opacity:0;transition:opacity 0.3s}
-.kpi:hover::after{opacity:1}
-.kpi-red::after{background:var(--red)}
-.kpi-green::after{background:var(--green)}
-.kpi-cyan::after{background:var(--cyan)}
-.kpi-dim::after{background:var(--dim)}
-.kpi-label{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
-.kpi-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;letter-spacing:-1px;margin-bottom:5px}
-.kpi-sub{font-size:11px;color:var(--faint);font-weight:300}
-.c-red{color:var(--red)}.c-green{color:var(--green)}.c-cyan{color:var(--cyan)}.c-dim{color:var(--dim)}.c-amber{color:var(--amber)}
+/* PAGE HEADER */
+.page-hd{margin-bottom:4px}
+.page-eyebrow{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.page-eyebrow::before{content:'';width:16px;height:1.5px;background:var(--cyan)}
+.page-title{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--dim);font-weight:300}
 
-/* ── PANEL ── */
-.panel{
-  background:var(--bg);
-  border:1px solid var(--line);
-  border-radius:2px;overflow:hidden;
-}
-.panel-head{
-  padding:13px 20px;border-bottom:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:center;
-  background:var(--dark);
-}
-.panel-title{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
-.panel-tag{font-family:var(--mono);font-size:10px;letter-spacing:0.5px}
-.tag-live{color:var(--green)}.tag-data{color:var(--cyan)}
+/* PANEL */
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.panel-head{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:#fff}
+.panel-title{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.panel-tag{font-family:var(--mono);font-size:10px;font-weight:500}
+.tag-live{color:var(--green)}.tag-cyan{color:var(--cyan)}.tag-amber{color:var(--amber)}
 
-/* ── CHART ── */
-.chart-body{padding:16px 20px;height:180px}
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:20px;transition:box-shadow 0.2s;position:relative;overflow:hidden}
+.kpi:hover{box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:8px 8px 0 0}
+.k1::before{background:var(--red)}.k2::before{background:var(--green)}.k3::before{background:var(--cyan)}.k4::before{background:var(--amber)}
+.kpi-label{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.kpi-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;letter-spacing:-1px;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--faint)}
+.c-red{color:var(--red)}.c-green{color:var(--green)}.c-cyan{color:var(--cyan)}.c-amber{color:var(--amber)}.c-dim{color:var(--dim)}
 
-/* ── MODULE TABLE ── */
-.mod-thead{
-  display:grid;grid-template-columns:32px 1fr 110px 90px 90px 90px 84px;
-  padding:10px 20px;border-bottom:1px solid var(--line);gap:12px;
-  background:var(--dark);
-}
-.th{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--faint);letter-spacing:1px;text-transform:uppercase}
-.mod-row{
-  display:grid;grid-template-columns:32px 1fr 110px 90px 90px 90px 84px;
-  padding:13px 20px;border-bottom:1px solid var(--line2);
-  gap:12px;align-items:center;transition:background 0.15s;
-}
+/* CHART */
+.chart-body{padding:14px 18px;height:200px}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* MODULE TABLE */
+.mod-table{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.mod-thead{display:grid;grid-template-columns:28px 1fr 110px 84px 84px 84px 80px;padding:10px 18px;border-bottom:1px solid var(--line);gap:12px;background:var(--surface)}
+.th{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--faint);letter-spacing:1px;text-transform:uppercase}
+.mod-row{display:grid;grid-template-columns:28px 1fr 110px 84px 84px 84px 80px;padding:13px 18px;border-bottom:1px solid var(--line2);gap:12px;align-items:center;transition:background 0.15s}
 .mod-row:last-child{border-bottom:none}
-.mod-row:hover{background:rgba(255,255,255,0.02)}
+.mod-row:hover{background:var(--surface)}
 .mod-idx{font-family:var(--mono);font-size:11px;color:var(--faint)}
 .mod-name-t{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
 .mod-type-t{font-size:11px;color:var(--faint);font-weight:300}
-.ratio-wrap{display:flex;flex-direction:column;gap:5px}
-.ratio-track{height:2px;background:var(--line);border-radius:1px;overflow:hidden}
-.ratio-fill{height:100%;border-radius:1px;transition:width 1.2s ease}
-.ratio-pct{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--dim)}
-.cell-num{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--dim)}
+.ratio-wrap{display:flex;flex-direction:column;gap:4px}
+.ratio-track{height:3px;background:var(--card);border-radius:2px;overflow:hidden}
+.ratio-fill{height:100%;border-radius:2px;transition:width 1.2s ease}
+.ratio-pct{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--dim)}
+.cell-num{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--dim)}
 .cell-hi{color:var(--cyan)}
-.sev{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.5px;padding:3px 8px;border-radius:2px;border:1px solid;display:inline-block}
-.sev-c{color:var(--red);border-color:rgba(255,64,96,0.3);background:rgba(255,64,96,0.07)}
-.sev-h{color:var(--amber);border-color:rgba(245,166,35,0.3);background:rgba(245,166,35,0.06)}
-.sev-m{color:#c8a84b;border-color:rgba(200,168,75,0.25);background:rgba(200,168,75,0.05)}
-.sev-l{color:var(--green);border-color:rgba(0,229,160,0.25);background:rgba(0,229,160,0.05)}
+.sev{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 8px;border-radius:4px;display:inline-block}
+.sev-c{color:var(--red);background:rgba(214,59,59,0.1)}
+.sev-h{color:var(--amber);background:rgba(184,92,0,0.1)}
+.sev-m{color:#856404;background:rgba(133,100,4,0.1)}
+.sev-l{color:var(--green);background:rgba(14,138,90,0.1)}
 
-/* ── TRIAGE ── */
-.triage-row{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:2px;overflow:hidden;
-}
-.tc{background:var(--bg);padding:20px 22px;transition:background 0.2s;position:relative;overflow:hidden}
-.tc:hover{background:var(--card)}
-.tc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;opacity:0;transition:opacity 0.3s}
-.tc:hover::after{opacity:1}
-.tc-red::after{background:var(--red)}.tc-amber::after{background:var(--amber)}.tc-gold::after{background:#c8a84b}.tc-green::after{background:var(--green)}
-.tc-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
-.tc-num{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1;margin-bottom:4px}
-.tc-sub{font-family:var(--mono);font-size:10px;color:var(--faint)}
+/* TRIAGE */
+.triage-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tc{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;transition:box-shadow 0.2s}
+.tc:hover{box-shadow:0 2px 10px rgba(0,0,0,0.06)}
+.tc-label{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.tc-num{font-family:var(--mono);font-size:22px;font-weight:600;line-height:1;margin-bottom:4px}
+.tc-sub{font-family:var(--mono);font-size:9px;color:var(--faint)}
 
-/* ── TWO COL ── */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-
-/* ── SHAP ── */
-.shap-row{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line2);transition:background 0.15s}
+/* SHAP */
+.shap-row{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line2);transition:background 0.15s}
 .shap-row:last-child{border-bottom:none}
-.shap-row:hover{background:rgba(255,255,255,0.02)}
-.shap-rank{font-family:var(--mono);font-size:10px;color:var(--faint);width:16px;flex-shrink:0}
-.shap-name{font-size:12px;font-weight:500;color:var(--dim);flex:1}
-.shap-track{width:70px;height:2px;background:var(--line);border-radius:1px;overflow:hidden;flex-shrink:0}
-.shap-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:1px}
-.shap-val{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--cyan);width:40px;text-align:right;flex-shrink:0}
+.shap-row:hover{background:var(--surface)}
+.shap-rank{font-family:var(--mono);font-size:9px;color:var(--faint);width:14px;flex-shrink:0}
+.shap-name{font-size:12px;font-weight:500;color:var(--text);flex:1}
+.shap-track{width:80px;height:3px;background:var(--card);border-radius:2px;overflow:hidden;flex-shrink:0}
+.shap-fill{height:100%;background:var(--cyan);opacity:0.7;border-radius:2px}
+.shap-val{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--cyan);width:38px;text-align:right;flex-shrink:0}
 
-/* ── MODEL PERF ── */
-.perf-row{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line2);transition:background 0.15s}
+/* PERF */
+.perf-row{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line2);transition:background 0.15s}
 .perf-row:last-child{border-bottom:none}
-.perf-row:hover{background:rgba(255,255,255,0.02)}
-.perf-name{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--dim);width:95px;flex-shrink:0}
-.perf-type{font-family:var(--mono);font-size:9px;color:var(--faint);width:68px;flex-shrink:0;letter-spacing:0.5px}
-.perf-track{flex:1;height:2px;background:var(--line);border-radius:1px;overflow:hidden}
-.perf-fill{height:100%;border-radius:1px}
-.perf-auc{font-family:var(--mono);font-size:12px;font-weight:600;width:48px;text-align:right;flex-shrink:0}
+.perf-row:hover{background:var(--surface)}
+.perf-name{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text);width:90px;flex-shrink:0}
+.perf-type{font-family:var(--mono);font-size:9px;color:var(--faint);width:68px;flex-shrink:0}
+.perf-track{flex:1;height:3px;background:var(--card);border-radius:2px;overflow:hidden}
+.perf-fill{height:100%;border-radius:2px}
+.perf-auc{font-family:var(--mono);font-size:11px;font-weight:600;width:46px;text-align:right;flex-shrink:0}
 
-/* ── RIGHT PANEL ── */
-.right-panel{
-  border-left:1px solid var(--line);
-  background:rgba(4,6,10,0.7);
-  backdrop-filter:blur(20px);
-  display:flex;flex-direction:column;
-  position:sticky;top:56px;height:calc(100vh - 56px);
-}
-.rp-head{
-  padding:13px 18px;border-bottom:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:center;
-  background:var(--dark);flex-shrink:0;
-}
-.rp-title{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
-.rp-live{font-family:var(--mono);font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px}
-.alert-list{flex:1;overflow-y:auto}
-.alert-entry{
-  padding:12px 18px;border-bottom:1px solid var(--line2);
-  cursor:pointer;transition:background 0.15s;
-  animation:slideIn 0.3s ease;
-}
-@keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.alert-entry:hover{background:rgba(255,255,255,0.02)}
-.ae-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.ae-sev{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:0.5px}
-.ae-time{font-family:var(--mono);font-size:10px;color:var(--faint)}
-.ae-mod{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
-.ae-det{font-family:var(--mono);font-size:10px;color:var(--faint)}
-.rp-foot{
-  border-top:1px solid var(--line);padding:14px 18px;
-  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
-  flex-shrink:0;background:var(--dark);
-}
-.rpf{text-align:center}
-.rpf-v{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1;margin-bottom:3px}
-.rpf-l{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:0.5px;text-transform:uppercase}
+/* MITRE */
+.mitre-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mitre-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;transition:box-shadow 0.2s}
+.mitre-card:hover{box-shadow:0 2px 10px rgba(0,0,0,0.06)}
+.mitre-mod-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
+.mitre-id{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--cyan);margin-bottom:3px}
+.mitre-tactic{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--amber);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;padding:2px 6px;background:rgba(184,92,0,0.08);border-radius:3px;display:inline-block}
+.mitre-name{font-size:12px;color:var(--dim);margin-bottom:4px}
+.mitre-sub{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.mitre-link{font-family:var(--mono);font-size:10px;color:var(--cyan);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:8px;opacity:0.7;transition:opacity 0.2s}
+.mitre-link:hover{opacity:1}
 
-/* ── REPORT BTN ── */
-.report-btn{
-  display:block;margin:12px 16px;
-  font-family:var(--mono);font-size:10px;font-weight:600;
-  color:#050608;background:var(--cyan);
-  padding:9px;border-radius:2px;text-decoration:none;
-  letter-spacing:1px;text-transform:uppercase;
-  text-align:center;transition:all 0.2s;flex-shrink:0;
-}
-.report-btn:hover{background:#33d4ff;box-shadow:0 0 20px rgba(0,194,255,0.25)}
+/* VT */
+.vt-loading{font-size:12px;color:var(--faint);padding:20px 0;text-align:center;font-family:var(--mono)}
+.vt-ip-label{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.vt-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2)}
+.vt-row:last-child{border-bottom:none}
+.vt-k{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.vt-v{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--dim)}
+.vt-mal{color:var(--red)!important}.vt-ok{color:var(--green)!important}.vt-sus{color:var(--amber)!important}
+.vt-btn{width:100%;margin-top:14px;font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;background:var(--cyan);border:none;padding:10px;border-radius:6px;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s}
+.vt-btn:hover{background:#0066b8}
 
-/* scrollbar */
-::-webkit-scrollbar{width:3px}
+/* ALERT FEED */
+.alert-feed{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;padding:12px}
+.af-item{padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;cursor:pointer;transition:all 0.15s;animation:slideIn 0.3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+.af-item:hover{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.af-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.af-sev{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.5px;padding:1px 6px;border-radius:3px}
+.af-time{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.af-mod{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.af-det{font-family:var(--mono);font-size:9px;color:var(--faint)}
+
+/* AI EXPLAINER */
+.alert-opt{padding:10px 12px;background:var(--surface);border:1.5px solid var(--line);border-radius:6px;cursor:pointer;transition:all 0.15s;margin-bottom:6px}
+.alert-opt:hover{border-color:var(--cyan);background:#fff}
+.alert-opt.selected{border-color:var(--cyan);background:#e8f1fb}
+.ao-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.ao-sev{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px}
+.ao-time{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.ao-mod{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ao-det{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.explain-btn{width:100%;padding:10px;font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;background:var(--cyan);border:none;border-radius:6px;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;margin-top:8px}
+.explain-btn:hover{background:#0066b8}
+.explain-btn:disabled{background:var(--faint);cursor:not-allowed}
+.explain-output{background:#fff;border:1px solid var(--line);border-radius:8px;padding:20px;min-height:120px}
+.explain-output p{font-size:13px;color:var(--dim);line-height:1.8;font-weight:300}
+.ai-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.ai-badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 8px;background:rgba(0,120,212,0.1);color:var(--cyan);border-radius:3px}
+
+/* REPORT */
+.report-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:28px;max-width:560px}
+.report-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px}
+.report-desc{font-size:13px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-weight:300}
+.report-includes{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.ri{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)}
+.ri-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0}
+.dl-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;background:var(--cyan);padding:11px 24px;border-radius:6px;text-decoration:none;transition:all 0.2s}
+.dl-btn:hover{background:#0066b8;box-shadow:0 2px 12px rgba(0,120,212,0.25)}
+
+::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--faint);border-radius:2px}
-::-webkit-scrollbar-thumb:hover{background:var(--cyan)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--faint)}
 </style>
 </head>
 <body>
 
-<canvas id="node-canvas"></canvas>
-
-<!-- NAV -->
 <nav>
   <div class="nav-left">
     <a href="/" class="nav-logo">0x<span>Day</span></a>
@@ -283,134 +232,187 @@ main{padding:32px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:28
     <span class="nav-tag">Security Operations Centre</span>
   </div>
   <div class="nav-right">
-    <div class="live-pill">
-      <div class="live-dot"></div>
-      <span id="prom-label">Connecting...</span>
-    </div>
+    <div class="live-pill"><div class="live-dot"></div><span id="prom-label">Connecting...</span></div>
     <div class="nav-sep"></div>
     <span id="nav-time">--:--:--</span>
-    <a href="/api/report" class="nav-btn">↓ Report</a>
+    <a href="/api/report" class="nav-btn">↓ PDF Report</a>
   </div>
 </nav>
 
 <div class="shell">
 
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <div class="sb-group">
-      <div class="sb-heading">View</div>
-      <a href="#kpi-section" class="sb-item active"><span class="sb-name">Overview</span><span class="sb-badge">Live</span></a>
-      <a href="#modules-section" class="sb-item" onclick="document.getElementById('modules-section').scrollIntoView({behavior:'smooth'});return false;"><span class="sb-name">Modules</span><span class="sb-badge">5</span></a>
-      <a href="#results-section" class="sb-item" onclick="document.getElementById('results-section').scrollIntoView({behavior:'smooth'});return false;"><span class="sb-name">Results</span></a>
-      <a href="#shap-section" class="sb-item" onclick="document.getElementById('shap-section').scrollIntoView({behavior:'smooth'});return false;"><span class="sb-name">Explainability</span></a>
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-heading" style="margin-top:8px">Navigation</div>
+      <button class="sb-item active" onclick="showPage('overview')"><span class="sb-icon">◈</span><span class="sb-name">Overview</span><span class="sb-badge">Live</span></button>
+      <button class="sb-item" onclick="showPage('modules')"><span class="sb-icon">⬡</span><span class="sb-name">Modules</span><span class="sb-badge">5</span></button>
+      <button class="sb-item" onclick="showPage('intelligence')"><span class="sb-icon">◎</span><span class="sb-name">Intelligence</span><span class="sb-badge">VT</span></button>
+      <button class="sb-item" onclick="showPage('explainer')"><span class="sb-icon">✦</span><span class="sb-name">AI Explainer</span><span class="sb-badge">Claude</span></button>
+      <button class="sb-item" onclick="showPage('results')"><span class="sb-icon">◇</span><span class="sb-name">Results</span></button>
+      <button class="sb-item" onclick="showPage('reports')"><span class="sb-icon">↓</span><span class="sb-name">Reports</span></button>
     </div>
+
     <div class="sb-div"></div>
-    <div class="sb-group">
+
+    <div class="sb-section">
       <div class="sb-heading">Modules</div>
-      <div class="mod-line"><div class="ml-dot" style="background:#ff4060;box-shadow:0 0 5px #ff4060"></div><span class="ml-name">DDoS</span><span class="ml-auc">0.8592</span></div>
-      <div class="mod-line"><div class="ml-dot" style="background:#f5a623;box-shadow:0 0 5px #f5a623"></div><span class="ml-name">Brute Force</span><span class="ml-auc">0.6867</span></div>
-      <div class="mod-line"><div class="ml-dot" style="background:#c8a84b;box-shadow:0 0 5px #c8a84b"></div><span class="ml-name">DoS</span><span class="ml-auc">0.8318</span></div>
-      <div class="mod-line"><div class="ml-dot" style="background:#00e5a0;box-shadow:0 0 5px #00e5a0"></div><span class="ml-name">Web Attacks</span><span class="ml-auc">0.7694</span></div>
-      <div class="mod-line"><div class="ml-dot" style="background:#00c2ff;box-shadow:0 0 5px #00c2ff"></div><span class="ml-name">Botnet</span><span class="ml-auc">0.5740</span></div>
+      <div class="sb-mod"><div class="sb-mod-dot" style="background:#d63b3b"></div><span class="sb-mod-name">DDoS</span><span class="sb-mod-auc">0.8592</span></div>
+      <div class="sb-mod"><div class="sb-mod-dot" style="background:#b85c00"></div><span class="sb-mod-name">Brute Force</span><span class="sb-mod-auc">0.6867</span></div>
+      <div class="sb-mod"><div class="sb-mod-dot" style="background:#856404"></div><span class="sb-mod-name">DoS</span><span class="sb-mod-auc">0.8318</span></div>
+      <div class="sb-mod"><div class="sb-mod-dot" style="background:#0e8a5a"></div><span class="sb-mod-name">Web Attacks</span><span class="sb-mod-auc">0.7694</span></div>
+      <div class="sb-mod"><div class="sb-mod-dot" style="background:#0078d4"></div><span class="sb-mod-name">Botnet</span><span class="sb-mod-auc">0.5740</span></div>
     </div>
+
     <div class="sb-div"></div>
-    <div class="sb-group">
-      <div class="sb-heading">System</div>
+
+    <div class="sb-footer">
+      <div class="sb-heading" style="margin-bottom:8px">System</div>
       <div class="sb-sys-row"><span class="sb-sys-k">Prometheus</span><span class="sb-sys-v" id="sb-prom">—</span></div>
       <div class="sb-sys-row"><span class="sb-sys-k">Exporter</span><span class="sb-sys-v">:8001</span></div>
       <div class="sb-sys-row"><span class="sb-sys-k">Interval</span><span class="sb-sys-v">10s</span></div>
-      <div class="sb-sys-row"><span class="sb-sys-k">Dashboard</span><span class="sb-sys-v">:5000</span></div>
     </div>
-    <div class="sb-div"></div>
-    <a href="/api/report" class="report-btn">↓ Generate PDF Report</a>
-  </nav>
+  </aside>
 
-  <!-- MAIN -->
-  <main>
+  <div class="main">
 
-    <!-- KPI -->
-    <div id="kpi-section">
-      <div class="sec-hd">
-        <span class="sec-eyebrow">System Status</span>
-        <span class="sec-meta" id="last-update">—</span>
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="page-hd">
+        <div class="page-eyebrow">Overview</div>
+        <div class="page-title">Security Operations Centre</div>
+        <div class="page-sub">Live detection across 5 attack modules — updated every 10 seconds from Prometheus</div>
       </div>
       <div class="kpi-row">
-        <div class="kpi kpi-red">
-          <div class="kpi-label">Total Attacks</div>
-          <div class="kpi-val c-red" id="kpi-attacks">—</div>
-          <div class="kpi-sub">across 5 modules</div>
+        <div class="kpi k1"><div class="kpi-label">Total Attacks</div><div class="kpi-val c-red" id="kpi-attacks">—</div><div class="kpi-sub">across 5 modules</div></div>
+        <div class="kpi k2"><div class="kpi-label">Benign Flows</div><div class="kpi-val c-green" id="kpi-benign">—</div><div class="kpi-sub">normal baseline</div></div>
+        <div class="kpi k3"><div class="kpi-label">Best AE AUC</div><div class="kpi-val c-cyan">0.8318</div><div class="kpi-sub">DoS · zero-day capable</div></div>
+        <div class="kpi k4"><div class="kpi-label">Alert Reduction</div><div class="kpi-val c-amber">61%</div><div class="kpi-sub">27,642 suppressed</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Live Attack Rate — 5 Minute Window</span><span class="panel-tag tag-live">● LIVE</span></div>
+        <div class="chart-body"><canvas id="liveChart"></canvas></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Alert Feed</span><span class="panel-tag tag-live">● Live</span></div>
+          <div class="alert-feed" id="alertFeed"></div>
         </div>
-        <div class="kpi kpi-green">
-          <div class="kpi-label">Benign Flows</div>
-          <div class="kpi-val c-green" id="kpi-benign">—</div>
-          <div class="kpi-sub">normal traffic baseline</div>
-        </div>
-        <div class="kpi kpi-cyan">
-          <div class="kpi-label">Best AE AUC</div>
-          <div class="kpi-val c-cyan">0.8318</div>
-          <div class="kpi-sub">DoS · zero-day capable</div>
-        </div>
-        <div class="kpi kpi-dim">
-          <div class="kpi-label">Alert Reduction</div>
-          <div class="kpi-val c-dim">61%</div>
-          <div class="kpi-sub">27,642 flows suppressed</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="triage-row">
+            <div class="tc"><div class="tc-label c-red">Critical</div><div class="tc-num c-red">1</div><div class="tc-sub">≥ 0.75</div></div>
+            <div class="tc"><div class="tc-label c-amber">High</div><div class="tc-num c-amber">7</div><div class="tc-sub">≥ 0.50</div></div>
+            <div class="tc"><div class="tc-label" style="color:#856404">Medium</div><div class="tc-num" style="color:#856404">6,330</div><div class="tc-sub">≥ 0.25</div></div>
+            <div class="tc"><div class="tc-label c-green">Low</div><div class="tc-num c-green">38,811</div><div class="tc-sub">&lt; 0.25</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">System Status</span><span class="panel-tag" id="sys-tag" style="color:var(--green)">Checking...</span></div>
+            <div style="padding:12px 18px;display:flex;flex-direction:column;gap:6px">
+              <div class="sb-sys-row"><span style="font-size:12px;color:var(--faint)">Prometheus</span><span style="font-family:var(--mono);font-size:11px;color:var(--dim)" id="prom-status-2">—</span></div>
+              <div class="sb-sys-row"><span style="font-size:12px;color:var(--faint)">Last Update</span><span style="font-family:var(--mono);font-size:11px;color:var(--dim)" id="last-update">—</span></div>
+              <div class="sb-sys-row"><span style="font-size:12px;color:var(--faint)">Dashboard</span><span style="font-family:var(--mono);font-size:11px;color:var(--green)">localhost:5000</span></div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- CHART -->
-    <div class="panel">
-      <div class="panel-head">
-        <span class="panel-title">Attack Rate — 5 Minute Window</span>
-        <span class="panel-tag tag-live">● LIVE</span>
-      </div>
-      <div class="chart-body"><canvas id="liveChart"></canvas></div>
     </div>
 
     <!-- MODULES -->
-    <div id="modules-section">
-      <div class="sec-hd">
-        <span class="sec-eyebrow">Detection Modules</span>
-        <span class="sec-meta">CICIDS2017 · 3 models per module</span>
+    <div class="page" id="page-modules">
+      <div class="page-hd">
+        <div class="page-eyebrow">Detection Modules</div>
+        <div class="page-title">5 Attack Categories</div>
+        <div class="page-sub">CICIDS2017 · 3 models per module · trained on BENIGN traffic only</div>
       </div>
-      <div class="panel">
+      <div class="mod-table">
         <div class="mod-thead">
-          <div class="th">#</div>
-          <div class="th">Module</div>
-          <div class="th">Attack Ratio</div>
-          <div class="th">Attacks</div>
-          <div class="th">AE AUC</div>
-          <div class="th">ISO AUC</div>
-          <div class="th">Severity</div>
+          <div class="th">#</div><div class="th">Module</div><div class="th">Attack Ratio</div>
+          <div class="th">Attacks</div><div class="th">AE AUC</div><div class="th">ISO AUC</div><div class="th">Severity</div>
         </div>
         <div id="mod-rows"></div>
       </div>
-    </div>
-
-    <!-- TRIAGE -->
-    <div>
-      <div class="sec-hd">
-        <span class="sec-eyebrow">Alert Triage</span>
-        <span class="sec-meta">DDoS Module · 45,149 flows</span>
-      </div>
       <div class="triage-row">
-        <div class="tc tc-red"><div class="tc-label c-red">Critical</div><div class="tc-num c-red">1</div><div class="tc-sub">score ≥ 0.75</div></div>
-        <div class="tc tc-amber"><div class="tc-label c-amber">High</div><div class="tc-num c-amber">7</div><div class="tc-sub">score ≥ 0.50</div></div>
-        <div class="tc tc-gold"><div class="tc-label" style="color:#c8a84b">Medium</div><div class="tc-num" style="color:#c8a84b">6,330</div><div class="tc-sub">score ≥ 0.25</div></div>
-        <div class="tc tc-green"><div class="tc-label c-green">Low</div><div class="tc-num c-green">38,811</div><div class="tc-sub">score &lt; 0.25</div></div>
+        <div class="tc"><div class="tc-label c-red">Critical</div><div class="tc-num c-red">1</div><div class="tc-sub">score ≥ 0.75 · Immediate action</div></div>
+        <div class="tc"><div class="tc-label c-amber">High</div><div class="tc-num c-amber">7</div><div class="tc-sub">score ≥ 0.50 · Within 1 hour</div></div>
+        <div class="tc"><div class="tc-label" style="color:#856404">Medium</div><div class="tc-num" style="color:#856404">6,330</div><div class="tc-sub">score ≥ 0.25 · Standard queue</div></div>
+        <div class="tc"><div class="tc-label c-green">Low</div><div class="tc-num c-green">38,811</div><div class="tc-sub">score &lt; 0.25 · Monitor only</div></div>
       </div>
     </div>
 
-    <!-- TWO COL -->
-    <div class="two-col">
-
-      <!-- SHAP -->
-      <div id="shap-section">
-        <div class="sec-hd">
-          <span class="sec-eyebrow">SHAP Features</span>
-          <span class="sec-meta">ISO Forest · DDoS</span>
+    <!-- INTELLIGENCE -->
+    <div class="page" id="page-intelligence">
+      <div class="page-hd">
+        <div class="page-eyebrow">Threat Intelligence</div>
+        <div class="page-title">VirusTotal + MITRE ATT&CK</div>
+        <div class="page-sub">IP reputation enrichment and adversary technique mapping</div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">VirusTotal IP Enrichment</span><span class="panel-tag tag-cyan">VT API</span></div>
+          <div style="padding:16px">
+            <div id="vt-result"><div class="vt-loading">Click Enrich to query a threat IP</div></div>
+            <button class="vt-btn" onclick="enrichThreat()">⟳ Enrich Threat IP</button>
+          </div>
         </div>
         <div class="panel">
+          <div class="panel-head"><span class="panel-title">How It Works</span><span class="panel-tag tag-amber">Threat Intel</span></div>
+          <div style="padding:16px">
+            <p style="font-size:13px;color:var(--dim);line-height:1.8;margin-bottom:12px;font-weight:300">VirusTotal aggregates 70+ antivirus engines. Each IP lookup returns malicious detections, reputation score, country, and ISP data.</p>
+            <p style="font-size:13px;color:var(--dim);line-height:1.8;font-weight:300">In a production SOC, every CRITICAL alert automatically triggers a VT lookup — enriching the alert with real-world threat context in seconds.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:12px">
+          <div class="page-eyebrow" style="font-size:9px;margin-bottom:6px">MITRE ATT&CK Framework</div>
+          <p style="font-size:13px;color:var(--dim);font-weight:300">Each attack module mapped to the globally recognised adversary behaviour framework</p>
+        </div>
+        <div class="mitre-grid" id="mitre-grid"></div>
+      </div>
+    </div>
+
+    <!-- AI EXPLAINER -->
+    <div class="page" id="page-explainer">
+      <div class="page-hd">
+        <div class="page-eyebrow">AI Explainer</div>
+        <div class="page-title">Claude AI Alert Analysis</div>
+        <div class="page-sub">Natural language explanations powered by Claude claude-sonnet-4-20250514</div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="panel-head" style="border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:#fff"><span class="panel-title">Select Alert to Explain</span></div>
+          <div style="border:1px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:12px;background:#fff">
+            <div id="explain-alerts"></div>
+            <button class="explain-btn" id="explain-btn" onclick="runExplain()">Explain with Claude AI →</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="explain-output">
+            <div class="ai-header">
+              <span class="ai-badge">Claude AI</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">claude-sonnet-4-20250514</span>
+            </div>
+            <p id="explain-output" style="font-size:13px;color:var(--faint);line-height:1.8;font-style:italic">Select an alert and click Explain to generate an AI analysis.</p>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">How It Works</span></div>
+            <div style="padding:14px 18px">
+              <p style="font-size:12px;color:var(--dim);line-height:1.8;font-weight:300">Claude analyses the risk score, model anomaly outputs, SHAP feature importance values, and attack classification to generate a plain English explanation of exactly what happened and what the analyst should do next.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="page" id="page-results">
+      <div class="page-hd">
+        <div class="page-eyebrow">Results</div>
+        <div class="page-title">Model Performance</div>
+        <div class="page-sub">ROC-AUC across all modules and models — every metric from actual evaluation on held-out test data</div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">SHAP Feature Importance</span><span class="panel-tag tag-cyan">ISO Forest · DDoS</span></div>
           <div class="shap-row"><span class="shap-rank">01</span><span class="shap-name">Bwd Packet Length Mean</span><div class="shap-track"><div class="shap-fill" style="width:100%"></div></div><span class="shap-val">0.2407</span></div>
           <div class="shap-row"><span class="shap-rank">02</span><span class="shap-name">Bwd Packet Length Max</span><div class="shap-track"><div class="shap-fill" style="width:99%"></div></div><span class="shap-val">0.2405</span></div>
           <div class="shap-row"><span class="shap-rank">03</span><span class="shap-name">Bwd Packet Length Std</span><div class="shap-track"><div class="shap-fill" style="width:87%"></div></div><span class="shap-val">0.2097</span></div>
@@ -422,15 +424,8 @@ main{padding:32px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:28
           <div class="shap-row"><span class="shap-rank">09</span><span class="shap-name">Max Packet Length</span><div class="shap-track"><div class="shap-fill" style="width:43%"></div></div><span class="shap-val">0.1041</span></div>
           <div class="shap-row"><span class="shap-rank">10</span><span class="shap-name">Average Packet Size</span><div class="shap-track"><div class="shap-fill" style="width:40%"></div></div><span class="shap-val">0.0969</span></div>
         </div>
-      </div>
-
-      <!-- MODEL PERF -->
-      <div id="results-section">
-        <div class="sec-hd">
-          <span class="sec-eyebrow">Model Performance</span>
-          <span class="sec-meta">ROC-AUC all modules</span>
-        </div>
         <div class="panel">
+          <div class="panel-head"><span class="panel-title">Model Performance · ROC-AUC</span><span class="panel-tag tag-cyan">All Modules</span></div>
           <div class="perf-row"><span class="perf-name">RF · DDoS</span><span class="perf-type">Supervised</span><div class="perf-track"><div class="perf-fill" style="width:100%;background:var(--faint)"></div></div><span class="perf-auc c-dim">1.0000</span></div>
           <div class="perf-row"><span class="perf-name">AE · DDoS</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:86%;background:var(--cyan)"></div></div><span class="perf-auc c-cyan">0.8592</span></div>
           <div class="perf-row"><span class="perf-name">AE · DoS</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:83%;background:var(--cyan)"></div></div><span class="perf-auc c-cyan">0.8318</span></div>
@@ -440,105 +435,97 @@ main{padding:32px 36px;overflow-y:auto;display:flex;flex-direction:column;gap:28
           <div class="perf-row"><span class="perf-name">AE · Botnet</span><span class="perf-type">Zero-day</span><div class="perf-track"><div class="perf-fill" style="width:57%;background:var(--amber)"></div></div><span class="perf-auc c-amber">0.5740</span></div>
         </div>
       </div>
-
     </div>
 
-  </main>
-
-  <!-- RIGHT PANEL -->
-  <aside class="right-panel">
-    <div class="rp-head">
-      <span class="rp-title">Alert Feed</span>
-      <span class="rp-live"><div class="live-dot"></div>Live</span>
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="page-hd">
+        <div class="page-eyebrow">Reports</div>
+        <div class="page-title">PDF Report Generator</div>
+        <div class="page-sub">Generate a complete SOC report with live data, MITRE mapping, and SHAP analysis</div>
+      </div>
+      <div class="two-col">
+        <div class="report-card">
+          <div class="report-title">0xDay SOC Detection Report</div>
+          <div class="report-desc">A complete security operations report generated from live Prometheus data. Includes all 5 modules, model performance, alert triage breakdown, SHAP feature importance, and MITRE ATT&CK mapping.</div>
+          <div class="report-includes">
+            <div class="ri"><div class="ri-dot"></div>Executive summary with live detection counts</div>
+            <div class="ri"><div class="ri-dot"></div>All 5 module results with AUC scores</div>
+            <div class="ri"><div class="ri-dot"></div>Alert triage breakdown — CRITICAL to LOW</div>
+            <div class="ri"><div class="ri-dot"></div>MITRE ATT&CK framework mapping</div>
+            <div class="ri"><div class="ri-dot"></div>Top 10 SHAP features with analysis</div>
+            <div class="ri"><div class="ri-dot"></div>Key findings and recommendations</div>
+          </div>
+          <a href="/api/report" class="dl-btn">↓ Download PDF Report</a>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Report Preview</span></div>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:10px">
+            <div style="background:var(--surface);border-radius:6px;padding:14px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px">COVER PAGE</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">0xDay — SOC Detection Report</div>
+              <div style="font-size:11px;color:var(--dim)">Generated with live Prometheus data</div>
+            </div>
+            <div style="background:var(--surface);border-radius:6px;padding:14px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px">INCLUDES</div>
+              <div style="font-size:12px;color:var(--dim);line-height:1.8">Executive Summary · Module Results · MITRE Mapping · SHAP Analysis · Key Findings</div>
+            </div>
+            <div style="background:var(--surface);border-radius:6px;padding:14px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px">FORMAT</div>
+              <div style="font-size:12px;color:var(--dim)">Dark-themed PDF · A4 · Auto-timestamped</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="alert-list" id="alertList"></div>
-    <div class="rp-foot">
-      <div class="rpf"><div class="rpf-v c-red">1</div><div class="rpf-l">Critical</div></div>
-      <div class="rpf"><div class="rpf-v c-amber">7</div><div class="rpf-l">High</div></div>
-      <div class="rpf"><div class="rpf-v" style="color:#c8a84b">6,330</div><div class="rpf-l">Medium</div></div>
-      <div class="rpf"><div class="rpf-v c-dim">27,642</div><div class="rpf-l">Supp.</div></div>
-    </div>
-  </aside>
 
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// ── NODE NETWORK ──
-(function(){
-  const canvas=document.getElementById('node-canvas');
-  const ctx=canvas.getContext('2d');
-  let W,H,nodes=[];
-  const COLORS=['#00c2ff','#00e5a0','#ff4060','#f5a623','#bf5fff'];
-  const COUNT=70,DIST=140;
-  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
-  function init(){
-    nodes=[];
-    for(let i=0;i<COUNT;i++){
-      const col=COLORS[Math.floor(Math.random()*COLORS.length)];
-      nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:Math.random()*1.4+0.5,col,pulse:Math.random()*Math.PI*2});
-    }
-  }
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    for(let i=0;i<nodes.length;i++){
-      for(let j=i+1;j<nodes.length;j++){
-        const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y;
-        const d=Math.sqrt(dx*dx+dy*dy);
-        if(d<DIST){
-          const h=nodes[i].col.replace('#','');
-          const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
-          ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);
-          ctx.strokeStyle=`rgba(${r},${g},${b},${(1-d/DIST)*0.2})`;ctx.lineWidth=0.5;ctx.stroke();
-        }
-      }
-    }
-    nodes.forEach(n=>{
-      n.pulse+=0.035;const glow=(Math.sin(n.pulse)+1)*0.5;
-      const h=n.col.replace('#','');
-      const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
-      ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(${r},${g},${b},${0.6+0.4*glow})`;
-      ctx.shadowColor=n.col;ctx.shadowBlur=4+5*glow;ctx.fill();ctx.shadowBlur=0;
-      n.x+=n.vx;n.y+=n.vy;
-      if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;
-    });
-    requestAnimationFrame(draw);
-  }
-  resize();init();draw();
-  window.addEventListener('resize',()=>{resize();init();});
-})();
-
 // ── CLOCK ──
 function tick(){document.getElementById('nav-time').textContent=new Date().toTimeString().slice(0,8);}
 setInterval(tick,1000);tick();
 
+// ── PAGE NAVIGATION ──
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+name+"'"))
+      b.classList.add('active');
+  });
+}
+
 // ── CHART ──
-const liveChart=new Chart(document.getElementById('liveChart'),{
+const chart=new Chart(document.getElementById('liveChart'),{
   type:'line',data:{labels:[],datasets:[]},
   options:{
     responsive:true,maintainAspectRatio:false,animation:false,
     interaction:{mode:'index',intersect:false},
     plugins:{
-      legend:{position:'top',labels:{color:'#3a4455',font:{family:'IBM Plex Mono',size:10},boxWidth:6,padding:14,usePointStyle:true}},
-      tooltip:{backgroundColor:'rgba(4,6,10,0.95)',borderColor:'rgba(255,255,255,0.06)',borderWidth:1,titleColor:'#eef1f6',bodyColor:'#8a96a8',titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10},padding:10}
+      legend:{position:'top',labels:{color:'#9aa3b2',font:{family:'IBM Plex Mono',size:10},boxWidth:6,padding:14,usePointStyle:true}},
+      tooltip:{backgroundColor:'#fff',borderColor:'#e4e7ec',borderWidth:1,titleColor:'#0f1117',bodyColor:'#5a6478',titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10},padding:10}
     },
     scales:{
-      x:{ticks:{color:'#3a4455',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:6},grid:{color:'rgba(255,255,255,0.03)'},border:{color:'rgba(255,255,255,0.06)'}},
-      y:{ticks:{color:'#3a4455',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,0.03)'},border:{color:'rgba(255,255,255,0.06)'}}
+      x:{ticks:{color:'#9aa3b2',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:6},grid:{color:'#f0f2f5'},border:{color:'#e4e7ec'}},
+      y:{ticks:{color:'#9aa3b2',font:{family:'IBM Plex Mono',size:9}},grid:{color:'#f0f2f5'},border:{color:'#e4e7ec'}}
     }
   }
 });
 
 function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return String(n)}
 function sevClass(r){if(r>=0.75)return['CRITICAL','sev-c'];if(r>=0.50)return['HIGH','sev-h'];if(r>=0.25)return['MEDIUM','sev-m'];return['LOW','sev-l']}
-const COLS={'DDoS':'#ff4060','Brute Force':'#f5a623','DoS':'#c8a84b','Web Attacks':'#00e5a0','Botnet':'#00c2ff'};
+const COLS={'DDoS':'#d63b3b','Brute Force':'#b85c00','DoS':'#856404','Web Attacks':'#0e8a5a','Botnet':'#0078d4'};
+const CHART_COLS={'DDoS':'#d63b3b','Brute Force':'#b85c00','DoS':'#856404','Web Attacks':'#0e8a5a','Botnet':'#0078d4'};
 
 function renderModules(mods){
   document.getElementById('mod-rows').innerHTML=mods.map((m,i)=>{
     const pct=m.total>0?Math.round(m.attack/m.total*100):0;
     const[sev,sc]=sevClass(m.risk);
-    const col=COLS[m.name]||'#3a4455';
+    const col=COLS[m.name]||'#9aa3b2';
     return`<div class="mod-row">
       <span class="mod-idx">${String(i+1).padStart(2,'0')}</span>
       <div><div class="mod-name-t">${m.name}</div><div class="mod-type-t">${m.type}</div></div>
@@ -551,37 +538,108 @@ function renderModules(mods){
   }).join('');
 }
 
+// ── ALERTS ──
 const ALERTS=[
-  {sev:'CRITICAL',col:'#ff4060',mod:'DDoS',det:'risk=0.9096 · ae=1.000 · iso=0.987'},
-  {sev:'HIGH',col:'#f5a623',mod:'DDoS',det:'risk=0.7127 · ae=0.954 · iso=0.871'},
-  {sev:'HIGH',col:'#f5a623',mod:'Web Attacks',det:'risk=0.6841 · ae=0.912 · SQLi'},
-  {sev:'MEDIUM',col:'#c8a84b',mod:'Brute Force',det:'risk=0.4821 · iso=0.741 · SSH'},
-  {sev:'MEDIUM',col:'#c8a84b',mod:'DoS',det:'risk=0.3912 · ae=0.701 · Slowloris'},
-  {sev:'MEDIUM',col:'#c8a84b',mod:'Botnet',det:'risk=0.2988 · ae=0.612 · C2'},
-  {sev:'LOW',col:'#00e5a0',mod:'Web Attacks',det:'risk=0.1204 · ae=0.341'},
-  {sev:'SUPP',col:'#3a4455',mod:'All Modules',det:'risk=0.042 · BENIGN'},
+  {sev:'CRITICAL',col:'#d63b3b',bg:'rgba(214,59,59,0.1)',mod:'DDoS',det:'risk=0.9096 · ae=1.000 · iso=0.987',data:{module:'DDoS',risk:0.9096,ae:1.0,iso:0.987,attacks:128027,features:['Bwd Packet Length Mean','Bwd Packet Length Max','Packet Length Std']}},
+  {sev:'HIGH',col:'#b85c00',bg:'rgba(184,92,0,0.1)',mod:'DDoS',det:'risk=0.7127 · ae=0.954 · iso=0.871',data:{module:'DDoS',risk:0.7127,ae:0.954,iso:0.871,attacks:128027,features:['Bwd Packet Length Mean','Packet Length Variance','Flow IAT Max']}},
+  {sev:'HIGH',col:'#b85c00',bg:'rgba(184,92,0,0.1)',mod:'Web Attacks',det:'risk=0.6841 · ae=0.912 · SQLi',data:{module:'Web Attacks',risk:0.6841,ae:0.912,iso:0.801,attacks:2189,features:['Packet Length Variance','Flow IAT Max','Average Packet Size']}},
+  {sev:'MEDIUM',col:'#856404',bg:'rgba(133,100,4,0.1)',mod:'Brute Force',det:'risk=0.4821 · iso=0.741 · SSH',data:{module:'Brute Force',risk:0.4821,ae:0.741,iso:0.741,attacks:13835,features:['Flow Duration','Fwd Packets per Second','Bwd Packets per Second']}},
+  {sev:'MEDIUM',col:'#856404',bg:'rgba(133,100,4,0.1)',mod:'Botnet',det:'risk=0.2988 · ae=0.612 · C2',data:{module:'Botnet',risk:0.2988,ae:0.612,iso:0.587,attacks:1977,features:['Flow Duration','Flow IAT Mean','Packet Length Mean']}},
 ];
-let ai=0;
+let alertIdx=0;
+let selectedAlert=0;
+
 function addAlert(){
-  const a=ALERTS[ai%ALERTS.length];ai++;
+  const a=ALERTS[alertIdx%ALERTS.length];alertIdx++;
   const t=new Date().toTimeString().slice(0,8);
-  const el=document.createElement('div');el.className='alert-entry';
-  el.innerHTML=`<div class="ae-top"><span class="ae-sev" style="color:${a.col}">${a.sev}</span><span class="ae-time">${t}</span></div><div class="ae-mod">${a.mod}</div><div class="ae-det">${a.det}</div>`;
-  const list=document.getElementById('alertList');
-  list.insertBefore(el,list.firstChild);
-  while(list.children.length>60)list.removeChild(list.lastChild);
+  const el=document.createElement('div');el.className='af-item';
+  el.innerHTML=`<div class="af-top"><span class="af-sev" style="color:${a.col};background:${a.bg}">${a.sev}</span><span class="af-time">${t}</span></div><div class="af-mod">${a.mod}</div><div class="af-det">${a.det}</div>`;
+  const feed=document.getElementById('alertFeed');
+  feed.insertBefore(el,feed.firstChild);
+  while(feed.children.length>20)feed.removeChild(feed.lastChild);
 }
-for(let i=0;i<8;i++)addAlert();
+for(let i=0;i<5;i++)addAlert();
 setInterval(addAlert,9000);
 
+function renderExplainAlerts(){
+  document.getElementById('explain-alerts').innerHTML=ALERTS.map((a,i)=>`
+    <div class="alert-opt${i===selectedAlert?' selected':''}" onclick="selectAlert(${i})">
+      <div class="ao-top"><span class="ao-sev" style="color:${a.col};background:${a.bg}">${a.sev}</span><span class="ao-time">${new Date().toTimeString().slice(0,8)}</span></div>
+      <div class="ao-mod">${a.mod}</div>
+      <div class="ao-det">${a.det}</div>
+    </div>`).join('');
+}
+function selectAlert(i){selectedAlert=i;renderExplainAlerts();}
+
+async function runExplain(){
+  const a=ALERTS[selectedAlert];
+  const btn=document.getElementById('explain-btn');
+  const out=document.getElementById('explain-output');
+  btn.disabled=true;btn.textContent='Analysing...';
+  out.style.fontStyle='italic';out.style.color='var(--faint)';
+  out.textContent='Claude is analysing this alert...';
+  try{
+    const res=await fetch('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({module:a.data.module,risk:a.data.risk,ae_score:a.data.ae,iso_score:a.data.iso,attack_count:a.data.attacks,top_features:a.data.features})});
+    const d=await res.json();
+    out.style.fontStyle='normal';out.style.color='var(--dim)';
+    out.textContent=d.explanation;
+  }catch(e){
+    out.style.color='var(--red)';out.textContent='Request failed: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='Explain with Claude AI →';
+}
+renderExplainAlerts();
+
+// ── MITRE ──
+async function loadMitre(){
+  try{
+    const d=await(await fetch('/api/mitre')).json();
+    document.getElementById('mitre-grid').innerHTML=Object.entries(d).map(([mod,m])=>`
+      <div class="mitre-card">
+        <div class="mitre-mod-name">${mod}</div>
+        <div class="mitre-id">${m.id}</div>
+        <div><span class="mitre-tactic">${m.tactic}</span></div>
+        <div class="mitre-name">${m.name}</div>
+        <div class="mitre-sub">${m.sub}</div>
+        <a href="${m.url}" target="_blank" class="mitre-link">View on MITRE ATT&CK ↗</a>
+      </div>`).join('');
+  }catch(e){console.warn(e);}
+}
+loadMitre();
+
+// ── VT ──
+async function enrichThreat(){
+  document.getElementById('vt-result').innerHTML='<div class="vt-loading">Querying VirusTotal...</div>';
+  try{
+    const d=await(await fetch('/api/enrich')).json();
+    const vt=d.ip_enrichment;
+    if(vt.error){document.getElementById('vt-result').innerHTML=`<div class="vt-loading" style="color:var(--amber)">Error: ${vt.error}</div>`;return;}
+    const repColor=vt.reputation<0?'vt-mal':vt.reputation>0?'vt-ok':'';
+    document.getElementById('vt-result').innerHTML=`
+      <div class="vt-ip-label">⚠ ${vt.ip}</div>
+      <div class="vt-row"><span class="vt-k">Malicious engines</span><span class="vt-v vt-mal">${vt.malicious}</span></div>
+      <div class="vt-row"><span class="vt-k">Suspicious</span><span class="vt-v vt-sus">${vt.suspicious}</span></div>
+      <div class="vt-row"><span class="vt-k">Harmless</span><span class="vt-v vt-ok">${vt.harmless}</span></div>
+      <div class="vt-row"><span class="vt-k">Reputation</span><span class="vt-v ${repColor}">${vt.reputation}</span></div>
+      <div class="vt-row"><span class="vt-k">Country</span><span class="vt-v">${vt.country}</span></div>
+      <div class="vt-row"><span class="vt-k">Owner</span><span class="vt-v" style="font-size:10px">${vt.owner}</span></div>`;
+  }catch(e){document.getElementById('vt-result').innerHTML=`<div class="vt-loading" style="color:var(--red)">Failed: ${e.message}</div>`;}
+}
+
+// ── FETCH METRICS ──
 async function fetchMetrics(){
   try{
     const d=await(await fetch('/api/metrics')).json();
     document.getElementById('kpi-attacks').textContent=fmt(d.total_attacks);
     document.getElementById('kpi-benign').textContent=fmt(d.total_benign);
-    document.getElementById('last-update').textContent='Updated '+d.timestamp;
-    document.getElementById('prom-label').textContent=d.prometheus_live?'Prometheus · Live':'Prometheus · Static';
-    document.getElementById('sb-prom').textContent=d.prometheus_live?'Live':'—';
+    document.getElementById('last-update').textContent=d.timestamp;
+    const live=d.prometheus_live;
+    document.getElementById('prom-label').textContent=live?'Prometheus · Live':'Prometheus · Static';
+    document.getElementById('sb-prom').textContent=live?'Live':'—';
+    document.getElementById('prom-status-2').textContent=live?'Live':'Static';
+    document.getElementById('sys-tag').textContent=live?'● All Systems Live':'● Static Mode';
+    document.getElementById('sys-tag').style.color=live?'var(--green)':'var(--amber)';
     renderModules(d.modules);
   }catch(e){console.warn(e);}
 }
@@ -590,18 +648,18 @@ async function fetchChart(){
   try{
     const s=await(await fetch('/api/chart')).json();
     if(!s.length){demoChart();return;}
-    liveChart.data.labels=s[0].data.map(p=>new Date(p[0]).toTimeString().slice(0,5));
-    liveChart.data.datasets=s.map(x=>({label:x.name,data:x.data.map(p=>p[1]),borderColor:x.color,backgroundColor:'transparent',borderWidth:1,pointRadius:0,tension:0.3}));
-    liveChart.update('none');
+    chart.data.labels=s[0].data.map(p=>new Date(p[0]).toTimeString().slice(0,5));
+    chart.data.datasets=s.map(x=>({label:x.name,data:x.data.map(p=>p[1]),borderColor:CHART_COLS[x.name]||x.color,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.3}));
+    chart.update('none');
   }catch(e){demoChart();}
 }
 
 function demoChart(){
-  const mods=[{name:'DDoS',color:'#ff4060',base:1200},{name:'Brute Force',color:'#f5a623',base:180},{name:'DoS',color:'#c8a84b',base:890},{name:'Web Attacks',color:'#00e5a0',base:22},{name:'Botnet',color:'#00c2ff',base:19}];
+  const mods=[{name:'DDoS',c:'#d63b3b',b:1200},{name:'Brute Force',c:'#b85c00',b:180},{name:'DoS',c:'#856404',b:890},{name:'Web Attacks',c:'#0e8a5a',b:22},{name:'Botnet',c:'#0078d4',b:19}];
   const labels=Array.from({length:20},(_,i)=>new Date(Date.now()-(19-i)*15000).toTimeString().slice(0,5));
-  liveChart.data.labels=labels;
-  liveChart.data.datasets=mods.map(m=>({label:m.name,data:labels.map(()=>m.base+(Math.random()-0.5)*m.base*0.25),borderColor:m.color,backgroundColor:'transparent',borderWidth:1,pointRadius:0,tension:0.3}));
-  liveChart.update('none');
+  chart.data.labels=labels;
+  chart.data.datasets=mods.map(m=>({label:m.name,data:labels.map(()=>m.b+(Math.random()-0.5)*m.b*0.25),borderColor:m.c,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.3}));
+  chart.update('none');
 }
 
 fetchMetrics();fetchChart();
