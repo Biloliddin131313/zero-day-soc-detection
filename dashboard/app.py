@@ -16,7 +16,11 @@ MODULES = [
     {"id":"DoS","name":"DoS","type":"Hulk GoldenEye Slowloris","iso":0.8290,"ae":0.8318,"rf":1.0,"flows":139170,"color":"#c8a84b"},
     {"id":"Web Attacks","name":"Web Attacks","type":"SQLi XSS HTTP Brute Force","iso":0.7018,"ae":0.7694,"rf":0.9998,"flows":24911,"color":"#00e5a0"},
     {"id":"Botnet","name":"Botnet","type":"C2 Covert Channel","iso":0.5875,"ae":0.5740,"rf":0.9996,"flows":24697,"color":"#00c2ff"},
-    {"id":"Live Traffic","name":"Live Traffic","type":"Real Network · Zeek Capture","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#a855f7"},
+    {"id":"Live DDoS","name":"Live DDoS","type":"Real Traffic · DDoS Models","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#a855f7"},
+    {"id":"Live BruteForce","name":"Live BruteForce","type":"Real Traffic · BruteForce Models","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#c084fc"},
+    {"id":"Live DoS","name":"Live DoS","type":"Real Traffic · DoS Models","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#e879f9"},
+    {"id":"Live WebAttacks","name":"Live WebAttacks","type":"Real Traffic · WebAttack Models","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#f0abfc"},
+    {"id":"Live Botnet","name":"Live Botnet","type":"Real Traffic · Botnet Models","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#d946ef"},
 ]
 
 MITRE_MAP = {
