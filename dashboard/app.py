@@ -16,6 +16,7 @@ MODULES = [
     {"id":"DoS","name":"DoS","type":"Hulk GoldenEye Slowloris","iso":0.8290,"ae":0.8318,"rf":1.0,"flows":139170,"color":"#c8a84b"},
     {"id":"Web Attacks","name":"Web Attacks","type":"SQLi XSS HTTP Brute Force","iso":0.7018,"ae":0.7694,"rf":0.9998,"flows":24911,"color":"#00e5a0"},
     {"id":"Botnet","name":"Botnet","type":"C2 Covert Channel","iso":0.5875,"ae":0.5740,"rf":0.9996,"flows":24697,"color":"#00c2ff"},
+    {"id":"Live Traffic","name":"Live Traffic","type":"Real Network · Zeek Capture","iso":0.0,"ae":0.0,"rf":0.0,"flows":0,"color":"#a855f7"},
 ]
 
 MITRE_MAP = {
@@ -51,7 +52,7 @@ def get_metrics():
         a=qprom(f'soc_flows_total{{module="{m["id"]}",type="ATTACK"}}') or 0
         b=qprom(f'soc_flows_total{{module="{m["id"]}",type="BENIGN"}}') or 0
         ta+=a;tb+=b;t=a+b
-        mods.append({**m,"attack":int(a),"benign":int(b),"total":int(t),"risk":round(a/t,4) if t>0 else 0.0})
+        mods.append({**m,"attack":int(a),"benign":int(b),"total":int(t),"flows":int(t),"risk":round(a/t,4) if t>0 else 0.0})
     return mods,int(ta),int(tb)
 
 def vt_lookup(ip):

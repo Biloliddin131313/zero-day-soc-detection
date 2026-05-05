@@ -248,6 +248,7 @@ nav{
       <button class="sb-item" onclick="showPage('modules')"><span class="sb-icon">⬡</span><span class="sb-name">Modules</span><span class="sb-badge">5</span></button>
       <button class="sb-item" onclick="showPage('intelligence')"><span class="sb-icon">◎</span><span class="sb-name">Intelligence</span><span class="sb-badge">VT</span></button>
       <button class="sb-item" onclick="showPage('explainer')"><span class="sb-icon">✦</span><span class="sb-name">AI Explainer</span><span class="sb-badge">AI</span></button>
+      <button class="sb-item" onclick="showPage('zeroday')"><span class="sb-icon">⚠</span><span class="sb-name">Zero-Day Hunter</span><span class="sb-badge" id="zd-badge" style="background:#d63b3b;color:#fff">0</span></button>
       <button class="sb-item" onclick="showPage('results')"><span class="sb-icon">◇</span><span class="sb-name">Results</span></button>
       <button class="sb-item" onclick="showPage('reports')"><span class="sb-icon">↓</span><span class="sb-name">Reports</span></button>
     </div>
@@ -437,27 +438,23 @@ nav{
     </div>
 
     <!-- REPORTS -->
+    <div class="page" id="page-zeroday">
+      <div class="page-hd">
+        <div class="page-eyebrow">Zero-Day Hunter</div>
+        <div class="page-title">Unknown Threat Detection</div>
+
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Zero-Day Candidates</span><span class="panel-tag" style="color:#d63b3b" id="zd-count">Scanning...</span></div>
+        <div id="zdFeed" style="display:flex;flex-direction:column;gap:6px;padding:12px;max-height:400px;overflow-y:auto"></div>
+      </div>
+    </div>
     <div class="page" id="page-reports">
       <div class="page-hd">
         <div class="page-eyebrow">Reports</div>
         <div class="page-title">PDF Report Generator</div>
-        <div class="page-sub">Generate a complete SOC report with live data, MITRE mapping, and SHAP analysis</div>
       </div>
-      <div class="two-col">
-        <div class="report-card">
-          <div class="report-title">0xDay SOC Detection Report</div>
-          <div class="report-desc">A complete security operations report generated from live Prometheus data. Includes all 5 modules, model performance, alert triage breakdown, SHAP feature importance, and MITRE ATT&CK mapping.</div>
-          <div class="report-includes">
-            <div class="ri"><div class="ri-dot"></div>Executive summary with live detection counts</div>
-            <div class="ri"><div class="ri-dot"></div>All 5 module results with AUC scores</div>
-            <div class="ri"><div class="ri-dot"></div>Alert triage breakdown — CRITICAL to LOW</div>
-            <div class="ri"><div class="ri-dot"></div>MITRE ATT&CK framework mapping</div>
-            <div class="ri"><div class="ri-dot"></div>Top 10 SHAP features with analysis</div>
-            <div class="ri"><div class="ri-dot"></div>Key findings and recommendations</div>
-          </div>
-          <a href="/api/report" class="dl-btn">↓ Download PDF Report</a>
-        </div>
-        <div class="panel">
+      <div class="panel">
           <div class="panel-head"><span class="panel-title">Report Preview</span></div>
           <div style="padding:18px;display:flex;flex-direction:column;gap:10px">
             <div style="background:var(--surface);border-radius:6px;padding:14px">
@@ -741,6 +738,53 @@ function demoChart(){
   chart.data.datasets=mods.map(m=>({label:m.name,data:labels.map(()=>m.b+(Math.random()-0.5)*m.b*0.25),borderColor:m.c,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.3}));
   chart.update('none');
 }
+
+function updateZeroDay(modules){
+  const feed = document.getElementById('zdFeed');
+  const badge = document.getElementById('zd-badge');
+  const count = document.getElementById('zd-count');
+  if(!feed) return;
+  const candidates = [];
+  for(const m of modules){
+    const rf = m.rf || 0;
+    const iso = m.iso_auc || 0;
+    const ae = m.ae_auc || 0;
+    // Zero-day signal: RF low but anomaly detectors high
+    if(rf === 0 && (m.risk||0) > 0.3){
+      candidates.push({name:m.name, rf, iso, ae, risk:m.risk||0, flows:m.flows||0});
+    }
+  }
+  badge.textContent = candidates.length;
+  count.textContent = candidates.length + ' candidate(s) detected';
+  count.style.color = candidates.length > 0 ? '#d63b3b' : 'var(--green)';
+  if(candidates.length === 0){
+    feed.innerHTML = '<div style="padding:24px;text-align:center;color:var(--dim);font-size:13px">No zero-day candidates detected — all modules showing expected RF/anomaly agreement</div>';
+    return;
+  }
+  feed.innerHTML = candidates.map(c => `
+    <div style="background:var(--card);border:1px solid #d63b3b44;border-radius:6px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-weight:600;color:#d63b3b">⚠ UNKNOWN THREAT · ${c.name}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--faint)">${new Date().toTimeString().slice(0,8)}</span>
+      </div>
+      <div style="display:flex;gap:16px;font-family:var(--mono);font-size:11px">
+        <span style="color:var(--green)">RF=${c.rf.toFixed(3)} LOW</span>
+        <span style="color:#d63b3b">IF=${c.iso.toFixed(3)} HIGH</span>
+        <span style="color:#d63b3b">AE=${c.ae.toFixed(3)} HIGH</span>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--dim)">Random Forest cannot classify this traffic pattern. Anomaly detectors flagging — possible novel attack.</div>
+      <div style="margin-top:8px;display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--faint)"><span style="color:#ff4060">RISK ${c.risk.toFixed(4)}</span><span style="color:#a855f7">FLOWS ${c.flows.toLocaleString()}</span><span style="color:${c.risk>0.6?"#ff4060":c.risk>0.3?"#f5a623":"#00e5a0"}">SEVERITY ${c.risk>0.6?"HIGH":c.risk>0.3?"MEDIUM":"LOW"}</span></div>
+    </div>`).join('');
+}
+
+const _origFetchMetrics = fetchMetrics;
+fetchMetrics = async function(){
+  await _origFetchMetrics();
+  try{
+    const d=await(await fetch('/api/metrics')).json();
+    if(d.modules) updateZeroDay(d.modules);
+  }catch(e){}
+};
 
 fetchMetrics();fetchChart();
 setInterval(fetchMetrics,10000);

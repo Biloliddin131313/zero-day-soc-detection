@@ -16,6 +16,11 @@ MODULES = {
     "Brute Force": {"csv":"dataset/cicids2017/bruteforce_balanced.csv","iso":"models/bf_isolation_forest.pkl","ae":"models/bf_autoencoder.keras","rf":"models/bf_random_forest.pkl","scaler":"models/bf_scaler.pkl"},
     "DoS": {"csv":"dataset/cicids2017/dos_balanced.csv","iso":"models/dos_isolation_forest.pkl","ae":"models/dos_autoencoder.keras","rf":"models/dos_random_forest.pkl","scaler":"models/dos_scaler.pkl"},
     "Web Attacks": {"csv":"dataset/cicids2017/CICIDS2017_sample.csv","iso":"models/web_isolation_forest.pkl","ae":"models/web_autoencoder.keras","rf":"models/web_random_forest.pkl","scaler":"models/web_scaler.pkl"},
+    "Live DDoS": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/isolation_forest.pkl","ae":"models/autoencoder.keras","rf":"scripts/ddos_module/ddos_detector_rf.pkl","scaler":"scripts/ddos_module/scaler.pkl"},
+    "Live BruteForce": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/bf_isolation_forest.pkl","ae":"models/bf_autoencoder.keras","rf":"models/bf_random_forest.pkl","scaler":"models/bf_scaler.pkl"},
+    "Live DoS": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/dos_isolation_forest.pkl","ae":"models/dos_autoencoder.keras","rf":"models/dos_random_forest.pkl","scaler":"models/dos_scaler.pkl"},
+    "Live WebAttacks": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/web_isolation_forest.pkl","ae":"models/web_autoencoder.keras","rf":"models/web_random_forest.pkl","scaler":"models/web_scaler.pkl"},
+    "Live Botnet": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/bot_isolation_forest.pkl","ae":"models/bot_autoencoder.keras","rf":"models/bot_random_forest.pkl","scaler":"models/bot_scaler.pkl"},
     "Botnet": {"csv":"dataset/cicids2017/CICIDS2017_sample.csv","iso":"models/bot_isolation_forest.pkl","ae":"models/bot_autoencoder.keras","rf":"models/bot_random_forest.pkl","scaler":"models/bot_scaler.pkl"},
 }
 
@@ -86,6 +91,8 @@ def process_module(name, entry, correlator):
         df = pd.read_csv(entry["csv"], low_memory=False)
         df.columns = df.columns.str.strip()
         X = df.drop(columns=["Label"], errors="ignore")
+        if hasattr(entry["scaler"],"n_features_in_") and entry["scaler"].n_features_in_ == 77:
+            X = X.drop(columns=["Destination Port"], errors="ignore")
         X = X.apply(pd.to_numeric, errors="coerce")
         X.replace([np.inf, -np.inf], 0, inplace=True)
         X.fillna(0, inplace=True)
