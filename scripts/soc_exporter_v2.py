@@ -6,6 +6,13 @@ import joblib
 from datetime import datetime, timedelta
 from prometheus_client import start_http_server, Counter, Gauge, Histogram
 
+# Make project root importable so `database` package can be found
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from database.db_writer import write_alert as db_write_alert
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("0xday")
@@ -16,11 +23,11 @@ MODULES = {
     "Brute Force": {"csv":"dataset/cicids2017/bruteforce_balanced.csv","iso":"models/bf_isolation_forest.pkl","ae":"models/bf_autoencoder.keras","rf":"models/bf_random_forest.pkl","scaler":"models/bf_scaler.pkl"},
     "DoS": {"csv":"dataset/cicids2017/dos_balanced.csv","iso":"models/dos_isolation_forest.pkl","ae":"models/dos_autoencoder.keras","rf":"models/dos_random_forest.pkl","scaler":"models/dos_scaler.pkl"},
     "Web Attacks": {"csv":"dataset/cicids2017/CICIDS2017_sample.csv","iso":"models/web_isolation_forest.pkl","ae":"models/web_autoencoder.keras","rf":"models/web_random_forest.pkl","scaler":"models/web_scaler.pkl"},
-    "Live DDoS": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/isolation_forest.pkl","ae":"models/autoencoder.keras","rf":"scripts/ddos_module/ddos_detector_rf.pkl","scaler":"scripts/ddos_module/scaler.pkl"},
-    "Live BruteForce": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/bf_isolation_forest.pkl","ae":"models/bf_autoencoder.keras","rf":"models/bf_random_forest.pkl","scaler":"models/bf_scaler.pkl"},
-    "Live DoS": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/dos_isolation_forest.pkl","ae":"models/dos_autoencoder.keras","rf":"models/dos_random_forest.pkl","scaler":"models/dos_scaler.pkl"},
-    "Live WebAttacks": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/web_isolation_forest.pkl","ae":"models/web_autoencoder.keras","rf":"models/web_random_forest.pkl","scaler":"models/web_scaler.pkl"},
-    "Live Botnet": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/bot_isolation_forest.pkl","ae":"models/bot_autoencoder.keras","rf":"models/bot_random_forest.pkl","scaler":"models/bot_scaler.pkl"},
+##    "Live DDoS": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/isolation_forest.pkl","ae":"models/autoencoder.keras","rf":"scripts/ddos_module/ddos_detector_rf.pkl","scaler":"scripts/ddos_module/scaler.pkl"},
+##    "Live BruteForce": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/bf_isolation_forest.pkl","ae":"models/bf_autoencoder.keras","rf":"models/bf_random_forest.pkl","scaler":"models/bf_scaler.pkl"},
+##    "Live DoS": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/dos_isolation_forest.pkl","ae":"models/dos_autoencoder.keras","rf":"models/dos_random_forest.pkl","scaler":"models/dos_scaler.pkl"},
+##    "Live WebAttacks": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/web_isolation_forest.pkl","ae":"models/web_autoencoder.keras","rf":"models/web_random_forest.pkl","scaler":"models/web_scaler.pkl"},
+##    "Live Botnet": {"csv":"dataset/cicids2017/live_flows.csv","iso":"models/bot_isolation_forest.pkl","ae":"models/bot_autoencoder.keras","rf":"models/bot_random_forest.pkl","scaler":"models/bot_scaler.pkl"},
     "Botnet": {"csv":"dataset/cicids2017/CICIDS2017_sample.csv","iso":"models/bot_isolation_forest.pkl","ae":"models/bot_autoencoder.keras","rf":"models/bot_random_forest.pkl","scaler":"models/bot_scaler.pkl"},
 }
 
@@ -85,7 +92,7 @@ def load_models():
             loaded[name] = entry
     return loaded
 
-def process_module(name, entry, correlator):
+def process_module(name, entry, correlator, last_alert_score, last_alert_time):
     t0 = time.time()
     try:
         df = pd.read_csv(entry["csv"], low_memory=False)
@@ -125,7 +132,28 @@ def process_module(name, entry, correlator):
         if flagged > 0:
             sev = classify(float(risk.max()))
             is_new, sev, _ = correlator.process(name, flagged, sev)
-            if is_new: soc_incidents.labels(module=name, severity=sev).inc(1)
+            if is_new:
+                soc_incidents.labels(module=name, severity=sev).inc(1)
+                # Use the PEAK flagged flow's scores (not population means)
+                peak_idx = int(np.argmax(risk))
+                peak_score = float(risk[peak_idx])
+                # Only write to DB if score changed meaningfully (avoid duplicates)
+                last_score = last_alert_score.get(name, -1)
+                last_time  = last_alert_time.get(name, 0)
+                score_changed = abs(peak_score - last_score) > 0.05
+                time_elapsed  = (time.time() - last_time) > 600  # 10 min cooldown
+                if score_changed or time_elapsed:
+                    db_write_alert(
+                        module_name=name,
+                        severity=sev,
+                        risk_score=peak_score,
+                        flagged_count=flagged,
+                        rf_attack_count=rf_attacks,
+                        iso_score_mean=float(iso_scores[peak_idx]),
+                        ae_score_mean=float(ae_scores[peak_idx]),
+                    )
+                    last_alert_score[name] = peak_score
+                    last_alert_time[name]  = time.time()
         elapsed = time.time() - t0
         log.info(f"[{name:>12}] Flows={n:>7,} | RF={rf_attacks:>6,} | Ensemble={flagged:>6,} | Suppressed={suppressed:>7,} ({reduction}%) | Risk={mean_risk:.3f} | {elapsed:.1f}s")
     except Exception as e:
@@ -144,12 +172,14 @@ def main():
     start_http_server(8001)
     log.info(f"Metrics: http://localhost:8001/metrics")
     correlator = AlertCorrelator(window=60)
+    last_alert_score = {}   # module → last peak risk score written to DB
+    last_alert_time = {}    # module → timestamp of last DB write
     cycle = 0
     while True:
         cycle += 1
         log.info(f"-- Cycle {cycle} --")
         for name, entry in loaded.items():
-            process_module(name, entry, correlator)
+            process_module(name, entry, correlator, last_alert_score, last_alert_time)
         time.sleep(15)
 
 if __name__ == "__main__":

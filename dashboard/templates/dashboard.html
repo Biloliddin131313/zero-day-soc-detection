@@ -158,6 +158,30 @@ nav{
 
 /* MITRE */
 .mitre-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lq-alert{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.lq-alert:last-child{border-bottom:none}
+.lq-alert-head{display:flex;align-items:center;gap:10px}
+.lq-sev{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:0.5px}
+.lq-sev-CRITICAL{background:#d63b3b;color:#fff}
+.lq-sev-HIGH{background:#f5a623;color:#000}
+.lq-sev-MEDIUM{background:#c8a84b;color:#000}
+.lq-sev-LOW{background:var(--card);color:var(--dim)}
+.lq-module{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)}
+.lq-scores{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.lq-time{font-family:var(--mono);font-size:10px;color:var(--faint);margin-left:auto}
+.lq-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.lq-btn{font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 12px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--text);cursor:pointer;transition:all 0.15s;letter-spacing:0.3px}
+.lq-btn:hover{background:var(--surface);border-color:var(--dim)}
+.lq-btn.ddos:hover{background:#ff4060;color:#fff;border-color:#ff4060}
+.lq-btn.bruteforce:hover{background:#f5a623;color:#000;border-color:#f5a623}
+.lq-btn.dos:hover{background:#c8a84b;color:#000;border-color:#c8a84b}
+.lq-btn.webattack:hover{background:#00e5a0;color:#000;border-color:#00e5a0}
+.lq-btn.botnet:hover{background:#00c2ff;color:#000;border-color:#00c2ff}
+.lq-btn.benign:hover{background:#22c55e;color:#fff;border-color:#22c55e}
+.lq-btn.unknown:hover{background:var(--card);color:var(--dim);border-color:var(--dim)}
+.lq-btn-confirm{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
+.lq-btn-confirm:hover{background:#0f0f1a}
+.lq-labelled{opacity:0.4;pointer-events:none}
 .mitre-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;transition:box-shadow 0.2s}
 .mitre-card:hover{box-shadow:0 2px 10px rgba(0,0,0,0.06)}
 .mitre-mod-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px}
@@ -448,27 +472,81 @@ nav{
         <div class="panel-head"><span class="panel-title">Zero-Day Candidates</span><span class="panel-tag" style="color:#d63b3b" id="zd-count">Scanning...</span></div>
         <div id="zdFeed" style="display:flex;flex-direction:column;gap:6px;padding:12px;max-height:400px;overflow-y:auto"></div>
       </div>
+
+      <!-- ── Analyst Labelling Panel ── -->
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head">
+          <span class="panel-title">Analyst Label Queue</span>
+          <span class="panel-tag" id="lq-stats" style="color:var(--dim)">Loading...</span>
+        </div>
+
+        <!-- Stats bar -->
+        <div style="display:flex;gap:24px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--surface)">
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text)" id="lq-pending">—</div>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px">PENDING</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:#00e5a0" id="lq-labelled">—</div>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px">LABELLED</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:#f5a623" id="lq-queued">—</div>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px">IN QUEUE</div>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid var(--line)">
+            <div style="flex:1">
+              <div style="font-size:10px;color:var(--dim);margin-bottom:4px">Progress to next retrain</div>
+              <div style="height:4px;background:var(--card);border-radius:2px;overflow:hidden">
+                <div id="lq-progress-bar" style="height:100%;background:#00e5a0;border-radius:2px;width:0%;transition:width 0.4s"></div>
+              </div>
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--faint)" id="lq-until">100 to go</div>
+          </div>
+        </div>
+
+        <!-- Alert list -->
+        <div id="lq-feed" style="display:flex;flex-direction:column;max-height:480px;overflow-y:auto"></div>
+
+        <!-- Empty state -->
+        <div id="lq-empty" style="display:none;padding:32px;text-align:center;color:var(--dim);font-size:13px">
+          ✓ All alerts labelled — great work
+        </div>
+      </div>
     </div>
     <div class="page" id="page-reports">
       <div class="page-hd">
         <div class="page-eyebrow">Reports</div>
         <div class="page-title">PDF Report Generator</div>
+        <div class="page-sub">Generate a complete SOC report with live data and MITRE mapping</div>
       </div>
-      <div class="panel">
+      <div class="two-col">
+        <div class="report-card">
+          <div class="report-title">0xDay SOC Detection Report</div>
+          <div class="report-desc">A complete security operations report generated from live Prometheus data. Includes all modules, model performance, alert triage breakdown, and MITRE ATT&CK mapping.</div>
+          <div class="report-includes">
+            <div class="ri"><div class="ri-dot"></div>Executive summary with live detection counts</div>
+            <div class="ri"><div class="ri-dot"></div>All module results with AUC scores</div>
+            <div class="ri"><div class="ri-dot"></div>MITRE ATT&CK framework mapping</div>
+
+          </div>
+          <a href="/api/report" class="dl-btn">↓ Download PDF Report</a>
+        </div>
+        <div class="panel">
           <div class="panel-head"><span class="panel-title">Report Preview</span></div>
           <div style="padding:18px;display:flex;flex-direction:column;gap:10px">
             <div style="background:var(--surface);border-radius:6px;padding:14px">
               <div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px">COVER PAGE</div>
-              <div style="font-size:13px;font-weight:600;color:var(--text)">0xDay — SOC Detection Report</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">0xDay SOC Detection Report</div>
               <div style="font-size:11px;color:var(--dim)">Generated with live Prometheus data</div>
             </div>
             <div style="background:var(--surface);border-radius:6px;padding:14px">
               <div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px">INCLUDES</div>
-              <div style="font-size:12px;color:var(--dim);line-height:1.8">Executive Summary · Module Results · MITRE Mapping · SHAP Analysis · Key Findings</div>
+              <div style="font-size:12px;color:var(--dim);line-height:1.8">Executive Summary · Module Results · MITRE Mapping</div>
             </div>
             <div style="background:var(--surface);border-radius:6px;padding:14px">
               <div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px">FORMAT</div>
-              <div style="font-size:12px;color:var(--dim)">Dark-themed PDF · A4 · Auto-timestamped</div>
+              <div style="font-size:12px;color:var(--dim)">White PDF · A4 · Auto-timestamped</div>
             </div>
           </div>
         </div>
@@ -486,6 +564,7 @@ setInterval(tick,1000);tick();
 
 // ── PAGE NAVIGATION ──
 function showPage(name){
+  if(name==='zeroday') loadLabelQueue();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -738,6 +817,120 @@ function demoChart(){
   chart.data.datasets=mods.map(m=>({label:m.name,data:labels.map(()=>m.b+(Math.random()-0.5)*m.b*0.25),borderColor:m.c,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.3}));
   chart.update('none');
 }
+
+// ── Analyst Label Queue ──────────────────────────────────────
+
+let lqAlerts = [];
+let lqSelected = {};  // flow_id → chosen label
+
+function loadLabelQueue() {
+  fetch('/api/feedback/pending')
+    .then(r => r.json())
+    .then(data => {
+      lqAlerts = data.alerts || [];
+      renderLabelQueue();
+    })
+    .catch(() => {});
+
+  fetch('/api/feedback/stats')
+    .then(r => r.json())
+    .then(s => {
+      document.getElementById('lq-pending').textContent  = s.pending_alerts   ?? '—';
+      document.getElementById('lq-labelled').textContent = s.labelled_alerts  ?? '—';
+      document.getElementById('lq-queued').textContent   = s.queued_for_training ?? '—';
+
+      const pct = Math.min(100, Math.round(
+        ((s.retrain_threshold - s.labels_until_retrain) / s.retrain_threshold) * 100
+      ));
+      document.getElementById('lq-progress-bar').style.width = pct + '%';
+      document.getElementById('lq-until').textContent = s.labels_until_retrain + ' to go';
+      document.getElementById('lq-stats').textContent =
+        s.pending_alerts + ' pending · ' + s.queued_for_training + ' queued';
+    })
+    .catch(() => {});
+}
+
+function renderLabelQueue() {
+  const feed  = document.getElementById('lq-feed');
+  const empty = document.getElementById('lq-empty');
+
+  if (!lqAlerts.length) {
+    feed.innerHTML  = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const LABEL_BTNS = [
+    { label:'DDoS',       cls:'ddos',       text:'DDoS'        },
+    { label:'BruteForce', cls:'bruteforce',  text:'Brute Force' },
+    { label:'DoS',        cls:'dos',         text:'DoS'         },
+    { label:'WebAttack',  cls:'webattack',   text:'Web Attack'  },
+    { label:'Botnet',     cls:'botnet',      text:'Botnet'      },
+    { label:'Benign',     cls:'benign',      text:'Benign ✓'    },
+    { label:'Unknown',    cls:'unknown',     text:'Unknown ?'   },
+  ];
+
+  feed.innerHTML = lqAlerts.map(alert => {
+    const ts = alert.timestamp ? alert.timestamp.replace('T', ' ').slice(0, 19) : '—';
+    const ifscore = alert.if_score  != null ? alert.if_score.toFixed(3)  : '—';
+    const aeerror = alert.ae_error  != null ? alert.ae_error.toFixed(3)  : '—';
+    const chosen  = lqSelected[alert.flow_id] || null;
+
+    const btnHtml = LABEL_BTNS.map(b => `
+      <button class="lq-btn ${b.cls} ${chosen === b.label ? 'lq-btn-confirm' : ''}"
+              onclick="selectLabel('${alert.flow_id}', '${b.label}', this)">
+        ${b.text}
+      </button>`).join('');
+
+    return `
+    <div class="lq-alert" id="lq-row-${alert.flow_id.slice(0,8)}">
+      <div class="lq-alert-head">
+        <span class="lq-sev lq-sev-${alert.severity}">${alert.severity}</span>
+        <span class="lq-module">${alert.rf_prediction}</span>
+        <span class="lq-scores">IF ${ifscore} · AE ${aeerror} · RF ${(alert.rf_confidence||0).toFixed(2)}</span>
+        <span class="lq-time">${ts}</span>
+      </div>
+      <div class="lq-btns">
+        <span style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-right:4px">LABEL:</span>
+        ${btnHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectLabel(flowId, label, btn) {
+  // Highlight selected button in this row
+  const rowId = flowId.slice(0, 8);
+  const row = document.getElementById('lq-row-' + rowId);
+  if (!row) return;
+  row.querySelectorAll('.lq-btn').forEach(b => b.classList.remove('lq-btn-confirm'));
+  btn.classList.add('lq-btn-confirm');
+
+  // Submit to backend
+  fetch('/api/feedback/label', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ flow_id: flowId, label: label })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'labelled') {
+      // Fade out and remove the row
+      row.style.transition = 'opacity 0.4s';
+      row.style.opacity = '0.3';
+      setTimeout(() => {
+        lqAlerts = lqAlerts.filter(a => a.flow_id !== flowId);
+        renderLabelQueue();
+        loadLabelQueue();  // refresh stats
+      }, 500);
+    }
+  })
+  .catch(() => {});
+}
+
+// Poll the label queue every 30s
+setInterval(loadLabelQueue, 30000);
 
 function updateZeroDay(modules){
   const feed = document.getElementById('zdFeed');
