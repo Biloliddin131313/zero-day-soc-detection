@@ -12,7 +12,7 @@ from pathlib import Path
 FEEDBACK_DB = Path(__file__).resolve().parent.parent / "feedback.db"
 
 app = Flask(__name__)
-PROMETHEUS = "http://localhost:9090"
+PROMETHEUS = os.environ.get("PROMETHEUS_URL", "http://localhost:9090")
 VT_API_KEY = "2790390e64cfaebb83837acdafca5af572620f0070b2cc424fc95f4c790701f3"
 
 MODULES = [
@@ -423,5 +423,38 @@ def api_feedback_stats():
     except sqlite3.Error as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+
+@app.route("/api/feedback/versions")
+def api_feedback_versions():
+    """Return model version history for the dashboard panel."""
+    try:
+        conn = _db_conn()
+        rows = conn.execute("""
+            SELECT version_name, model_path, trained_at,
+                   training_data_size, analyst_labels_used,
+                   holdout_accuracy, holdout_f1, holdout_auc, is_active, notes
+            FROM model_versions
+            ORDER BY trained_at DESC
+            LIMIT 50
+        """).fetchall()
+        conn.close()
+        versions = []
+        for r in rows:
+            versions.append({
+                "version_name": r["version_name"],
+                "trained_at": r["trained_at"],
+                "training_data_size": r["training_data_size"],
+                "analyst_labels_used": r["analyst_labels_used"],
+                "accuracy": r["holdout_accuracy"],
+                "f1": r["holdout_f1"],
+                "auc": r["holdout_auc"],
+                "is_active": bool(r["is_active"]),
+                "notes": r["notes"],
+            })
+        return jsonify({"versions": versions, "total": len(versions)})
+    except sqlite3.Error as e:
+        return jsonify({"error": str(e), "versions": []}), 500
 
 if __name__=="__main__": app.run(debug=True,port=5000)

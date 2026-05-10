@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+feedback.db
+notebooks/
+dissertation_figures/
+results/
+*.ipynb
+zero_day_detection.py
+index.html

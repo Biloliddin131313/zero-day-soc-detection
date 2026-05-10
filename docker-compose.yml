@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  # SOC Detection Engine
+  exporter:
+    build: .
+    command: python3 scripts/soc_exporter_v2.py
+    volumes:
+      - ./feedback.db:/app/feedback.db
+      - ./models:/app/models
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONPATH=/app"
+    env_file: .env
+    restart: unless-stopped
+
+  # Analyst Dashboard
+  dashboard:
+    build: .
+    command: gunicorn -w 2 -b 0.0.0.0:5000 --timeout 120 --graceful-timeout 30 dashboard.app:app
+    volumes:
+      - ./feedback.db:/app/feedback.db
+    ports:
+      - "5000:5000"
+    env_file: .env
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - exporter
+      - prometheus
+    restart: unless-stopped
+
+  # Retrain Scheduler
+  scheduler:
+    build: .
+    command: python3 scripts/retrain_scheduler.py
+    volumes:
+      - ./feedback.db:/app/feedback.db
+      - ./models:/app/models
+    env_file: .env
+    depends_on:
+      - exporter
+    restart: unless-stopped
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.docker.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
